@@ -1,5 +1,6 @@
-from tqdm import tqdm
 from IPython import embed
+from transformers import BertTokenizer
+from tqdm import tqdm
 
 import pandas as pd
 import argparse
@@ -7,8 +8,9 @@ import random
 import json
 import datetime
 
-ITEM_SEP_TOKEN = " [ITEM_SEP] "
-MASK_TOKEN = " [MASK]"
+tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+ITEM_SEP_TOKEN = " " + tokenizer.sep_token + " "
+MASK_TOKEN = tokenizer.mask_token
 
 def generate_seq_data_movie_lens(path, path_item_names):
     ratings = pd.read_csv(path)
@@ -41,11 +43,11 @@ def generate_seq_data_movie_lens(path, path_item_names):
             negative_samples_valid = [id_to_name[m] for m in random.sample(unseen_movies, 100)]
             negative_samples_test = [id_to_name[m] for m in random.sample(unseen_movies, 100)]
 
-            train.append( ITEM_SEP_TOKEN.join(train_movies) + MASK_TOKEN)
-            valid.append([ ITEM_SEP_TOKEN.join(train_movies) + MASK_TOKEN,
+            train.append( ITEM_SEP_TOKEN.join(train_movies))
+            valid.append([ ITEM_SEP_TOKEN.join(train_movies),
                            valid_movie,
                            ITEM_SEP_TOKEN.join(negative_samples_valid)])
-            test.append([ ITEM_SEP_TOKEN.join(train_movies) + MASK_TOKEN,
+            test.append([ ITEM_SEP_TOKEN.join(train_movies),
                           test_movie,
                           ITEM_SEP_TOKEN.join(negative_samples_test)])
 
@@ -53,7 +55,6 @@ def generate_seq_data_movie_lens(path, path_item_names):
                          pd.DataFrame(valid, columns=['X', 'y', 'ns_y_list']), \
                          pd.DataFrame(test, columns=['X', 'y', 'ns_y_list'])
     return train, valid, test
-
 
 def generate_seq_data_good_reads(path, path_item_names):
     book_titles = pd.read_csv(path_item_names)
@@ -66,7 +67,11 @@ def generate_seq_data_good_reads(path, path_item_names):
     print("reading and filtering from big interactions file (78GB)")
     with open(path_ratings, 'r') as f:
         next(f) #header
-        for l in f:
+        i=0
+        for l in tqdm(f):
+            i+=1
+            # if i > 3000:
+            #     break
             interaction = json.loads(l)
             if interaction["is_read"] and interaction["book_id"] in book_titles:
                 ratings.append([interaction["user_id"],
@@ -100,17 +105,17 @@ def generate_seq_data_good_reads(path, path_item_names):
         if len(user_read_books) > 2 :
             test_book = user_read_books[-1]
             valid_book = user_read_books[-2]
-            train_books = [m for m in user_read_books[0:-2]]
+            train_books = user_read_books[0:-2]
 
-            unread_books = set(all_books) - set(user_read_books)
-            negative_samples_valid = [m for m in random.sample(unread_books, 100)]
-            negative_samples_test = [m for m in random.sample(unread_books, 100)]
+            unread_books = list(set(all_books) - set(user_read_books))
+            negative_samples_valid = random.sample(unread_books, 100)
+            negative_samples_test = random.sample(unread_books, 100)
 
-            train.append( ITEM_SEP_TOKEN.join(train_books) + MASK_TOKEN)
-            valid.append([ ITEM_SEP_TOKEN.join(train_books) + MASK_TOKEN,
+            train.append( ITEM_SEP_TOKEN.join(train_books))
+            valid.append([ ITEM_SEP_TOKEN.join(train_books),
                            valid_book,
                            ITEM_SEP_TOKEN.join(negative_samples_valid)])
-            test.append([ ITEM_SEP_TOKEN.join(train_books) + MASK_TOKEN,
+            test.append([ ITEM_SEP_TOKEN.join(train_books),
                           test_book,
                           ITEM_SEP_TOKEN.join(negative_samples_test)])
 

@@ -11,9 +11,10 @@ import fasttext
 language_pred_model = fasttext.load_model('lid.176.ftz')
 stpwrds = set(stopwords.words('english'))
 
+negative_samples = 50
+
 def generate_product_search_movie_lens(path_reviews,
-                                       path_items,
-                                       negative_samples):
+                                       path_items):
     movie_titles = pd.read_csv(path_items)
     movie_titles['movieId'] = movie_titles['movieId'].astype(str)
     movie_titles = movie_titles. \
@@ -111,12 +112,10 @@ def main():
 
     if args.task == 'ml25m':
         train, valid, test = generate_product_search_movie_lens(args.reviews_path,
-                                                                args.items_path,
-                                                                negative_samples=10)
+                                                                args.items_path)
     elif args.task == 'gr':
         train, valid, test = generate_product_search_good_reads(args.reviews_path,
-                                                                args.items_path,
-                                                                negative_samples=10)
+                                                                args.items_path)
     else:
         raise Exception("task not accepted, choose from [ml25m,gr]")
 

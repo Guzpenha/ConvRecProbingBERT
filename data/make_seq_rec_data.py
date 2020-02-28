@@ -12,6 +12,8 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 ITEM_SEP_TOKEN = " " + tokenizer.sep_token + " "
 MASK_TOKEN = tokenizer.mask_token
 
+negative_samples = 50
+
 def generate_seq_data_movie_lens(path, path_item_names):
     ratings = pd.read_csv(path)
     ratings['movieId'] = ratings['movieId'].astype(str)
@@ -138,9 +140,9 @@ def main():
     args = parser.parse_args()
 
     if args.task == 'ml25m':
-        train, valid, test = generate_seq_data_movie_lens(args.ratings_path, args.item_names_path)
+        train, valid, test = generate_seq_data_movie_lens(args.ratings_path, args.item_names_path, negative_samples)
     elif args.task == 'gr':
-        train, valid, test = generate_seq_data_good_reads(args.ratings_path, args.item_names_path)
+        train, valid, test = generate_seq_data_good_reads(args.ratings_path, args.item_names_path, negative_samples)
     else:
         raise Exception("task not accepted, choose from [ml25m,gr]")
 

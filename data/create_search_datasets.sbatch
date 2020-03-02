@@ -20,6 +20,6 @@ srun python make_prod_search_data.py \
 
 srun python make_prod_search_data.py \
   --task ml25m \
-  --reviews_path ./search/reviews.csv.csv \
+  --reviews_path ./search/reviews.csv \
   --items_path ./recommendation/movies_names.csv \
   --output_path ./search/

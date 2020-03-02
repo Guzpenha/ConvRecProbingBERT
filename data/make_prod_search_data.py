@@ -24,7 +24,7 @@ def generate_product_search_movie_lens(path_reviews,
     all_movies = list(movie_titles.values())
 
     instances = []
-    with open(path_reviews, 'r') as f:
+    with open(path_reviews, 'r', encoding="utf-8") as f:
         i=0
         for line in tqdm(f):
             i+=1

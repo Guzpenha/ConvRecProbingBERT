@@ -1,8 +1,13 @@
 import scrapy
 import pandas as pd
+from IPython import embed
 
 class IMDBReviews(scrapy.Spider):
     name = "imdb_reviews"
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 0.5
+    }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -19,14 +24,14 @@ class IMDBReviews(scrapy.Spider):
         for k, v in id_to_name.items():
             imbd_id_to_name[id_to_imdb[k]] = v
 
-        df = pd.read_csv("reviews.csv", sep="\t", names=['name', 'review'])
+        df = pd.read_csv("crawled.csv", sep='\t')
         crawled = set(df.name.unique())
         self.urls = []
         self.url_to_name = {}
         for k,v in imbd_id_to_name.items():
             if v not in crawled:
                 url = ("https://www.imdb.com/title/tt" +
-                        ("0" * (9 - len(str(k)))) + str(k)+
+                        ("0" * (7 - len(str(k)))) + str(k)+
                         "/reviews")
                 self.urls.append(url)
                 self.url_to_name[url] = v
@@ -36,9 +41,11 @@ class IMDBReviews(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
+        with open("crawled.csv", "a+") as f:
+            f.write(self.url_to_name[response.url]+"\n")
+
         reviews = response.css('div.text::text').getall()
-        # id = response.url.split('/reviews')[0].split('/tt')[1]
-        # id = str(int(id))
+
         with open("reviews.csv","a+") as f:
             for review in reviews[0:20]:
                 review = review.replace("\n", '').replace("\t", ' ')

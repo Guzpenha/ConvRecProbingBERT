@@ -74,9 +74,9 @@ def generate_seq_data_good_reads(path, path_item_names, negative_samples):
         next(f) #header
         i=0
         for l in tqdm(f):
-            i+=1
-            if i > 3000:
-                break
+            # i+=1
+            # if i > 3000:
+            #     break
             interaction = json.loads(l)
             if interaction["is_read"] and interaction["book_id"] in book_titles:
                 ratings.append([interaction["user_id"],

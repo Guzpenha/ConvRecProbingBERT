@@ -27,12 +27,10 @@ def generate_product_search_movie_lens(path_reviews,
     with open(path_reviews, 'r', encoding="utf-8") as f:
         i=0
         for line in tqdm(f):
-            i+=1
-            if i > 10000:
-                break
-
+            # i+=1
+            # if i > 10000:
+            #     break
             movie_name, review = line.split("\t")
-
             query = review[0:-2].lower() #remove \n
             relevant_doc = movie_name
 
@@ -70,9 +68,9 @@ def generate_product_search_good_reads(path_reviews,
     with open(path_reviews) as f:
         i=0
         for line in tqdm(f):
-            i+=1
-            if i > 10000:
-                break
+            # i+=1
+            # if i > 10000:
+            #     break
             review = json.loads(line)
             if review['book_id'] in book_titles:
                 query = review['review_text'].replace("\n", " ")

@@ -44,9 +44,6 @@ def generate_conv_data(in_path):
         ] + list(candidates))
         index_subreddit.append([idx, r['subreddit']])
 
-        if idx > 100:
-            break
-
     train, valid, test = (instances[0: int(0.8*len(instances))],
                         instances[int(0.8*len(instances)) : int(0.9*len(instances))],
                         instances[int(0.9*len(instances)):])

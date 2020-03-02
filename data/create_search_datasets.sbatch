@@ -1,8 +1,8 @@
 #!/bin/sh
 
 #SBATCH --partition=general
-#SBATCH --qos=short
-#SBATCH --time=02:00:00
+#SBATCH --qos=long
+#SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:0
@@ -16,10 +16,10 @@ srun python make_prod_search_data.py \
   --task gr \
   --reviews_path ./search/goodreads_reviews_dedup.json \
   --items_path ./recommendation/books_names.csv \
-  --output_path ./search
+  --output_path ./search/gr/
 
 srun python make_prod_search_data.py \
   --task ml25m \
   --reviews_path ./search/reviews.csv \
   --items_path ./recommendation/movies_names.csv \
-  --output_path ./search/
+  --output_path ./search/ml25m/

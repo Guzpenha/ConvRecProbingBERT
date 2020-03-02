@@ -9,8 +9,9 @@ import random
 
 negative_samples = 50
 
-def generate_conv_data(in_path):
+def generate_conv_data(in_path, subreddit):
     df_conv = pd.read_csv(in_path, lineterminator= "\n")
+    df_conv = df_conv[df_conv['subreddit'] == subreddit]
     df_conv['query'] = df_conv['query'].astype(str)
     df_conv['relevant_response'] = df_conv['relevant_response'].astype(str)
 
@@ -63,11 +64,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--conversations_path", default=None, type=str, required=True,
                         help="the path with context-response pairs")
+    parser.add_argument("--subreddit", default=None, type=str, required=True,
+                        help="the subreddit to generate training instances ['MovieSuggestions', 'booksuggestions']")
     parser.add_argument("--output_path", default=None, type=str, required=True,
                         help="the path to_write files")
     args = parser.parse_args()
 
-    train, valid, test, subreddit_index = generate_conv_data(args.conversations_path)
+    train, valid, test, subreddit_index = generate_conv_data(args.conversations_path,
+                                                             args.subreddit)
     train.to_csv(args.output_path + "/train.csv", index=False)
     valid.to_csv(args.output_path + "/valid.csv", index=False)
     test.to_csv(args.output_path + "/test.csv", index=False)

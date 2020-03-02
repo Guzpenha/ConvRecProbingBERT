@@ -14,7 +14,7 @@ MASK_TOKEN = tokenizer.mask_token
 
 negative_samples = 50
 
-def generate_seq_data_movie_lens(path, path_item_names):
+def generate_seq_data_movie_lens(path, path_item_names, negative_samples):
     ratings = pd.read_csv(path)
     ratings['movieId'] = ratings['movieId'].astype(str)
     movie_names = pd.read_csv(path_item_names)
@@ -42,23 +42,26 @@ def generate_seq_data_movie_lens(path, path_item_names):
             train_movies = [id_to_name[m] for m in user_seen_movies[0:-2]]
 
             unseen_movies = set(all_movies) - set(user_seen_movies)
-            negative_samples_valid = [id_to_name[m] for m in random.sample(unseen_movies, 100)]
-            negative_samples_test = [id_to_name[m] for m in random.sample(unseen_movies, 100)]
+            negative_samples_train = [id_to_name[m] for m in random.sample(unseen_movies, negative_samples)]
+            negative_samples_valid = [id_to_name[m] for m in random.sample(unseen_movies, negative_samples)]
+            negative_samples_test = [id_to_name[m] for m in random.sample(unseen_movies, negative_samples)]
 
-            train.append( ITEM_SEP_TOKEN.join(train_movies))
-            valid.append([ ITEM_SEP_TOKEN.join(train_movies),
-                           valid_movie,
-                           ITEM_SEP_TOKEN.join(negative_samples_valid)])
-            test.append([ ITEM_SEP_TOKEN.join(train_movies),
-                          test_movie,
-                          ITEM_SEP_TOKEN.join(negative_samples_test)])
+            train.append([ITEM_SEP_TOKEN.join(train_movies[:-1]),
+                          train_movies[-1]] + negative_samples_train)
+            valid.append([ITEM_SEP_TOKEN.join(train_movies),
+                           valid_movie] + negative_samples_valid)
+            test.append([ITEM_SEP_TOKEN.join(train_movies),
+                          test_movie] + negative_samples_test)
 
-    train, valid, test = pd.DataFrame(train, columns=['X']), \
-                         pd.DataFrame(valid, columns=['X', 'y', 'ns_y_list']), \
-                         pd.DataFrame(test, columns=['X', 'y', 'ns_y_list'])
+    cols = ["query","relevant_doc"] + \
+           ["non_relevant_"+str(i+1) for i in range(negative_samples)]
+
+    train, valid, test = pd.DataFrame(train, columns=cols), \
+                         pd.DataFrame(valid, columns=cols), \
+                         pd.DataFrame(test, columns=cols)
     return train, valid, test
 
-def generate_seq_data_good_reads(path, path_item_names):
+def generate_seq_data_good_reads(path, path_item_names, negative_samples):
     book_titles = pd.read_csv(path_item_names)
     book_titles['bookId'] = book_titles['bookId'].astype(str)
     book_titles = book_titles.\
@@ -72,8 +75,8 @@ def generate_seq_data_good_reads(path, path_item_names):
         i=0
         for l in tqdm(f):
             i+=1
-            # if i > 3000:
-            #     break
+            if i > 3000:
+                break
             interaction = json.loads(l)
             if interaction["is_read"] and interaction["book_id"] in book_titles:
                 ratings.append([interaction["user_id"],
@@ -110,20 +113,23 @@ def generate_seq_data_good_reads(path, path_item_names):
             train_books = user_read_books[0:-2]
 
             unread_books = list(set(all_books) - set(user_read_books))
-            negative_samples_valid = random.sample(unread_books, 100)
-            negative_samples_test = random.sample(unread_books, 100)
+            negative_samples_train = random.sample(unread_books, negative_samples)
+            negative_samples_valid = random.sample(unread_books, negative_samples)
+            negative_samples_test = random.sample(unread_books, negative_samples)
 
-            train.append( ITEM_SEP_TOKEN.join(train_books))
-            valid.append([ ITEM_SEP_TOKEN.join(train_books),
-                           valid_book,
-                           ITEM_SEP_TOKEN.join(negative_samples_valid)])
-            test.append([ ITEM_SEP_TOKEN.join(train_books),
-                          test_book,
-                          ITEM_SEP_TOKEN.join(negative_samples_test)])
+            train.append([ITEM_SEP_TOKEN.join(train_books[:-1]),
+                          train_books[-1]] + negative_samples_train)
+            valid.append([ITEM_SEP_TOKEN.join(train_books),
+                          valid_book] + negative_samples_valid)
+            test.append([ITEM_SEP_TOKEN.join(train_books),
+                         test_book] + negative_samples_test)
 
-    train, valid, test = pd.DataFrame(train, columns=['X']), \
-                         pd.DataFrame(valid, columns=['X', 'y', 'ns_y_list']), \
-                         pd.DataFrame(test, columns=['X', 'y', 'ns_y_list'])
+    cols = ["query", "relevant_doc"] + \
+           ["non_relevant_" + str(i + 1) for i in range(negative_samples)]
+
+    train, valid, test = pd.DataFrame(train, columns=cols), \
+                         pd.DataFrame(valid, columns=cols), \
+                         pd.DataFrame(test, columns=cols)
 
     return train, valid, test
 

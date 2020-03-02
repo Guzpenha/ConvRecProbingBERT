@@ -14,7 +14,8 @@ stpwrds = set(stopwords.words('english'))
 negative_samples = 50
 
 def generate_product_search_movie_lens(path_reviews,
-                                       path_items):
+                                       path_items,
+                                       negative_samples):
     movie_titles = pd.read_csv(path_items)
     movie_titles['movieId'] = movie_titles['movieId'].astype(str)
     movie_titles = movie_titles. \
@@ -77,7 +78,6 @@ def generate_product_search_good_reads(path_reviews,
                 query = review['review_text'].replace("\n", " ")
                 relevant_doc = book_titles[review['book_id']]
                 language = language_pred_model.predict(relevant_doc, k=1)
-                print(language)
                 if len(query) > 50 and language[0][0] == '__label__en':
                     for word in relevant_doc.lower().replace(")"," ") \
                             .replace("(", " ") \
@@ -91,8 +91,10 @@ def generate_product_search_good_reads(path_reviews,
     train, valid, test = (instances[0: int(0.8*len(instances))],
                         instances[int(0.8*len(instances)) : int(0.9*len(instances))],
                         instances[int(0.9*len(instances)):])
+
     cols = ["query","relevant_doc"] + \
            ["non_relevant_"+str(i+1) for i in range(negative_samples)]
+
     train, valid, test = (pd.DataFrame(train, columns=cols),
                           pd.DataFrame(valid, columns=cols),
                           pd.DataFrame(test, columns=cols))
@@ -112,10 +114,12 @@ def main():
 
     if args.task == 'ml25m':
         train, valid, test = generate_product_search_movie_lens(args.reviews_path,
-                                                                args.items_path)
+                                                                args.items_path,
+                                                                negative_samples)
     elif args.task == 'gr':
         train, valid, test = generate_product_search_good_reads(args.reviews_path,
-                                                                args.items_path)
+                                                                args.items_path,
+                                                                negative_samples)
     else:
         raise Exception("task not accepted, choose from [ml25m,gr]")
 

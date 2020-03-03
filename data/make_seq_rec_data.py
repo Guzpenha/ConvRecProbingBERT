@@ -105,7 +105,7 @@ def generate_seq_data_good_reads(path, path_item_names, negative_samples):
     test = []
 
     print("Sampling books for each user")
-    for user in tqdm(users_read_books.keys(), desc="User"):
+    for user in tqdm([u for u in users_read_books.keys()][:200000], desc="User"):
         user_read_books = users_read_books[user]
         if len(user_read_books) > 2 :
             test_book = user_read_books[-1]

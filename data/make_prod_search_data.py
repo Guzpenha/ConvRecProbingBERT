@@ -63,7 +63,6 @@ def generate_product_search_good_reads(path_reviews,
         set_index('bookId').to_dict()['title']
 
     all_books = list(book_titles.values())
-
     instances = []
     with open(path_reviews) as f:
         i=0

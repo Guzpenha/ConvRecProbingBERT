@@ -1,10 +1,9 @@
-from IPython import embed
 from transformers import BertTokenizer
 from tqdm import tqdm
 
 import pandas as pd
+import numpy as np
 import argparse
-import random
 import json
 import datetime
 
@@ -27,7 +26,7 @@ def generate_seq_data_movie_lens(path, path_item_names, negative_samples):
         apply(list).reset_index(name='seen_movies').\
         set_index("userId").to_dict()['seen_movies']
 
-    all_movies = ratings['movieId'].unique()
+    movies_by_popularity = ratings['movieId'].values
 
     train = []
     valid = []
@@ -41,17 +40,24 @@ def generate_seq_data_movie_lens(path, path_item_names, negative_samples):
             valid_movie = id_to_name[user_seen_movies[-2]]
             train_movies = [id_to_name[m] for m in user_seen_movies[0:-2]]
 
-            unseen_movies = set(all_movies) - set(user_seen_movies)
-            negative_samples_train = [id_to_name[m] for m in random.sample(unseen_movies, negative_samples)]
-            negative_samples_valid = [id_to_name[m] for m in random.sample(unseen_movies, negative_samples)]
-            negative_samples_test = [id_to_name[m] for m in random.sample(unseen_movies, negative_samples)]
+            neg_samples_by_set = []
+            for _ in range(3):
+                neg_samples = [id_to_name[m] for m in
+                               np.random.choice(movies_by_popularity, negative_samples)
+                               if m not in user_seen_movies]
+                while len(neg_samples) < negative_samples:
+                    add_samples = [id_to_name[m] for m in
+                                   np.random.choice(movies_by_popularity, negative_samples)
+                                   if m not in user_seen_movies]
+                    neg_samples+=add_samples
+                neg_samples_by_set.append(neg_samples[:negative_samples])
 
             train.append([ITEM_SEP_TOKEN.join(train_movies[:-1]),
-                          train_movies[-1]] + negative_samples_train)
+                          train_movies[-1]] + neg_samples_by_set[0])
             valid.append([ITEM_SEP_TOKEN.join(train_movies),
-                           valid_movie] + negative_samples_valid)
+                          valid_movie] + neg_samples_by_set[1])
             test.append([ITEM_SEP_TOKEN.join(train_movies),
-                          test_movie] + negative_samples_test)
+                         test_movie] + neg_samples_by_set[2])
 
     cols = ["query","relevant_doc"] + \
            ["non_relevant_"+str(i+1) for i in range(negative_samples)]
@@ -61,7 +67,8 @@ def generate_seq_data_movie_lens(path, path_item_names, negative_samples):
                          pd.DataFrame(test, columns=cols)
     return train, valid, test
 
-def generate_seq_data_good_reads(path, path_item_names, negative_samples):
+def generate_seq_data_good_reads(path, path_item_names,
+                                 negative_samples, max_users = 200000):
     book_titles = pd.read_csv(path_item_names)
     book_titles['bookId'] = book_titles['bookId'].astype(str)
     book_titles = book_titles.\
@@ -98,31 +105,38 @@ def generate_seq_data_good_reads(path, path_item_names, negative_samples):
         apply(list).reset_index(name='users_read_books').\
         set_index("userId").to_dict()['users_read_books']
 
-    all_books = ratings_df['bookId'].unique()
+    books_by_popularity = ratings_df['bookId'].values
 
     train = []
     valid = []
     test = []
 
     print("Sampling books for each user")
-    for user in tqdm([u for u in users_read_books.keys()][:200000], desc="User"):
+    for user in tqdm([u for u in users_read_books.keys()][:max_users], desc="User"):
         user_read_books = users_read_books[user]
         if len(user_read_books) > 2 :
             test_book = user_read_books[-1]
             valid_book = user_read_books[-2]
             train_books = user_read_books[0:-2]
 
-            unread_books = list(set(all_books) - set(user_read_books))
-            negative_samples_train = random.sample(unread_books, negative_samples)
-            negative_samples_valid = random.sample(unread_books, negative_samples)
-            negative_samples_test = random.sample(unread_books, negative_samples)
+            neg_samples_by_set = []
+            for _ in range(3):
+                neg_samples = [b for b in
+                               np.random.choice(books_by_popularity, negative_samples)
+                               if b not in user_read_books]
+                while len(neg_samples) < negative_samples:
+                    add_samples = [b for b in
+                                   np.random.choice(books_by_popularity, negative_samples)
+                                   if b not in user_read_books]
+                    neg_samples+=add_samples
+                neg_samples_by_set.append(neg_samples[:negative_samples])
 
             train.append([ITEM_SEP_TOKEN.join(train_books[:-1]),
-                          train_books[-1]] + negative_samples_train)
+                          train_books[-1]] + neg_samples_by_set[0])
             valid.append([ITEM_SEP_TOKEN.join(train_books),
-                          valid_book] + negative_samples_valid)
+                          valid_book] + neg_samples_by_set[1])
             test.append([ITEM_SEP_TOKEN.join(train_books),
-                         test_book] + negative_samples_test)
+                         test_book] + neg_samples_by_set[2])
 
     cols = ["query", "relevant_doc"] + \
            ["non_relevant_" + str(i + 1) for i in range(negative_samples)]

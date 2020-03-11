@@ -34,7 +34,6 @@ do
     for HIDDEN_SIZE in 256
     do
       for NUM_EPOCHS in 10 50 100 200 300
-      x=$(( $x + 1 ))
       python main.py --dataset=train_ml25m \
         --dropout_rate=$DROPOUT \
         --l2_emb=$L2 \

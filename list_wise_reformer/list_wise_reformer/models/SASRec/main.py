@@ -7,6 +7,7 @@ from model import Model
 from tqdm import tqdm
 from util import *
 import pandas as pd
+import json
 
 def str2bool(s):
     if s not in {'False', 'True'}:
@@ -84,13 +85,15 @@ except:
 if args.dataset_list_valid != "":
     if not os.path.isdir(args.output_predictions_folder):
         os.makedirs(args.output_predictions_folder)
-    with open(os.path.join(args.output_predictions_folder, 'args.txt'), 'w') as f:
-        f.write('\n'.join([str(k) + ',' + str(v) for k, v in sorted(vars(args).items(), key=lambda x: x[0])]))
+    with open(os.path.join(args.output_predictions_folder, 'config.json'), 'w') as f:
+        args.task = args.dataset.split("_")[1]
+        f.write(json.dumps(vars(args)))
+        # f.write('\n'.join([str(k) + ',' + str(v) for k, v in sorted(vars(args).items(), key=lambda x: x[0])]))
     f.close()
     predictions = pred_custom_lists(model, dataset, args, sess)
     df = pd.DataFrame(predictions, columns=['prediction_'+str(i)
                                             for i in range(len(predictions[0]))])
-    df.to_csv(args.output_predictions_folder+"/sasrec_preds_"+args.dataset,
+    df.to_csv(args.output_predictions_folder+"/predictions.csv",
               index=False)
 f.close()
 sampler.close()

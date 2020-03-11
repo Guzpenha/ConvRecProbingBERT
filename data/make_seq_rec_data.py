@@ -144,8 +144,9 @@ def generate_seq_data_good_reads(path, path_item_names,
     train, valid, test = pd.DataFrame(train, columns=cols), \
                          pd.DataFrame(valid, columns=cols), \
                          pd.DataFrame(test, columns=cols)
-
-    return train, valid, test
+    return train.loc[~train['query'].isnull()],\
+           valid.loc[~valid['query'].isnull()],\
+           test.loc[~test['query'].isnull()]
 
 def main():
     parser = argparse.ArgumentParser()

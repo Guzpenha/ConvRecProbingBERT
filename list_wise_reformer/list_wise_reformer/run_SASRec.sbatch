@@ -1,37 +1,50 @@
 #!/bin/sh
 
 #SBATCH --partition=general
-#SBATCH --qos=short
-#SBATCH --time=01:00:00
+#SBATCH --qos=long
+#SBATCH --time=24:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:0
-#SBATCH --mem-per-cpu=8000
+#SBATCH --gres=gpu:1
+#SBATCH --mem-per-cpu=6000
 #SBATCH --mail-type=END
 
 module use /opt/insy/modulefiles
-source /home/nfs/gustavopenha/env_slice_learning/bin/activate
-
-
+module load cuda/10.0 cudnn/10.0-7.4.2.24
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
-#Creating ml25m dataset in SASRec format
-mkdir $REPO_DIR/list_wise_reformer/list_wise_reformer/models/SASRec/data/
-srun python create_sasrec_data.py  \
-    --task ml25m \
-    --data_folder $REPO_DIR/data/recommendation/ \
-    --sasrec_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models
+# Creating ml25m dataset in SASRec format (run this only the first time)
+#source /home/nfs/gustavopenha/env_slice_learning/bin/activate
+#mkdir $REPO_DIR/list_wise_reformer/list_wise_reformer/models/SASRec/data/
+#srun python create_sasrec_data.py  \
+#    --task ml25m \
+#    --data_folder $REPO_DIR/data/recommendation/ \
+#    --sasrec_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models
 
-
-#Running SASRec
+# Running SASRec
 source /home/nfs/gustavopenha/env_2.7/bin/activate
-cd SASRec
-python main.py --dataset=train_ml25m \
-  --train_dir=default \
-  --num_epochs=200 \
-  --eval_epochs=10 \
-  --maxlen=100 \
-  --dataset_list_valid valid_ml25m.csv \
-  --output_predictions_folder /tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha/data/output_data/sasrec
+cd models/SASRec/
+MAX_LEN=200
 
-
+x=0
+for DROPOUT in 0.1
+do
+  for L2 in 0.0001
+  do
+    for HIDDEN_SIZE in 256
+    do
+      for NUM_EPOCHS in 10 50 100 200 300
+      x=$(( $x + 1 ))
+      python main.py --dataset=train_ml25m \
+        --dropout_rate=$DROPOUT \
+        --l2_emb=$L2 \
+        --hidden_units=$HIDDEN_SIZE \
+        --train_dir=default \
+        --num_epochs=$NUM_EPOCHS \
+        --eval_epochs=10000 \
+        --maxlen=$MAX_LEN \
+        --dataset_list_valid valid_ml25m.csv \
+        --output_predictions_folder $REPO_DIR/data/output_data/sasrec_ml25m_${x}
+    done
+  done
+done

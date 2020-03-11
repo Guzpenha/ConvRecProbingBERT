@@ -9,7 +9,7 @@ class PopularityRecommender():
     This recommender model ranks by popularity of the items:
     thus the predictions are independent of the user.
     """
-    def __init__(self):
+    def __init__(self, seed=42):
         self.interaction_counts = Counter()
 
     def fit(self, sessions):

@@ -8,16 +8,17 @@ pip install -Iv tensorflow==1.12
 pip install pandas
 
 cd ..
-python run_sasrec.py  \
+python ./models/create_sasrec_data.py  \
     --task ml25m \
     --data_folder /Users/gustavopenha/personal/recsys20/data/recommendation/ \
-    --sasrec_folder /Users/gustavopenha/personal/recsys20/list_wise_reformer/models
+    --sasrec_folder /Users/gustavopenha/personal/recsys20/list_wise_reformer/list_wise_reformer/models
 
 cd SASRec
+
 python main.py --dataset=train_ml25m \
   --train_dir=default \
   --num_epochs=10 \
   --eval_epochs=10000 \
   --maxlen=100 \
   --dataset_list_valid valid_ml25m.csv \
-  --output_predictions_folder /Users/gustavopenha/personal/recsys20/data/output_data
+  --output_predictions_folder /Users/gustavopenha/personal/recsys20/data/output_data/sasrec

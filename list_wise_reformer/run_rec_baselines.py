@@ -1,7 +1,7 @@
 from IPython import embed
 
 from list_wise_reformer.models.rec_baselines import PopularityRecommender,\
-    RandomRecommender
+    RandomRecommender, SASRecommender
 from list_wise_reformer.eval.evaluation import evaluate_models
 
 import pandas as pd
@@ -25,10 +25,12 @@ def main():
                         help="the folder containing data")
     args = parser.parse_args()
 
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv")[0:1000]
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")[0:100]
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv")
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")
 
-    baselines = [RandomRecommender(),PopularityRecommender()]
+    baselines = [RandomRecommender(),
+                 PopularityRecommender()]
+
     results = {}
     for model in baselines:
         model_name = model.__class__.__name__
@@ -48,7 +50,7 @@ def main():
     for model in baselines:
         model_name = model.__class__.__name__
         logging.info("Evaluating {}".format(model_name))
-        for metric in ['map', 'recip_rank', 'ndcg_cut_10']:
+        for metric in ['recip_rank', 'ndcg_cut_10']:
             res = 0
             for q in results[model_name]['eval'].keys():
                 res += results[model_name]['eval'][q][metric]

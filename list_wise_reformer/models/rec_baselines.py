@@ -1,3 +1,4 @@
+from list_wise_reformer.models.utils import *
 from IPython import embed
 import random
 import pandas as pd
@@ -28,13 +29,14 @@ class PopularityRecommender():
 
 class RandomRecommender():
     # Prediction is a uniform between 0 and 1
-    def __init__(self):
+    def __init__(self, seed=42):
+        random.seed(seed)
         pass
 
     def fit(self, sessions):
         pass
 
-    def predict(self,sessions, doc_pred_columns):
+    def predict(self, sessions, doc_pred_columns):
         preds = []
         for _, _ in sessions.iterrows():
             user_preds = []
@@ -43,10 +45,26 @@ class RandomRecommender():
             preds.append(user_preds)
         return preds
 
-class SASRec():
-    # TODO: IMPLEMENT
-    def __init__(self):
+
+class SASRecommender():
+    """
+     SASRec uses python version 2 and TensorFlow 1.12, so I opted to
+     create a different env and use the authors code. I implemented code
+     to transform dataset to their format.
+
+     So I just run a different script (run_sasrec.sh) to save to a file
+     and then get the results from this file.
+     """
+    def __init__(self, preds_file):
+        self.preds_file = preds_file
         pass
+
+    def fit(self, sessions):
+        pass
+
+    def predict(self, sessions, doc_pred_columns):
+        preds_df = pd.read_csv(self.preds_file)
+        return preds_df.values
 
 class BERT4Rec():
     # TODO: IMPLEMENT

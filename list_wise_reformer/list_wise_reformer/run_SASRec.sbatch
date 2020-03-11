@@ -34,7 +34,8 @@ do
     for HIDDEN_SIZE in 256
     do
       for NUM_EPOCHS in 10 50 100 200 300
-      python main.py --dataset=train_ml25m \
+      do
+        python main.py --dataset=train_ml25m \
         --dropout_rate=$DROPOUT \
         --l2_emb=$L2 \
         --hidden_units=$HIDDEN_SIZE \
@@ -44,6 +45,7 @@ do
         --maxlen=$MAX_LEN \
         --dataset_list_valid valid_ml25m.csv \
         --output_predictions_folder $REPO_DIR/data/output_data/sasrec_ml25m_${x}
+      done
     done
   done
 done

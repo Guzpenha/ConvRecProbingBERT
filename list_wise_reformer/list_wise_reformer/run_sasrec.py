@@ -22,8 +22,8 @@ def main():
                         help="the folder containing code for sasrec")
     args = parser.parse_args()
 
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv")[0:10000]
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")[0:100]
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv")
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")
 
     #transform data to SASRec format and write to files
     train_sasrec, valid_sasrec = toSASRecFormat(train, valid)

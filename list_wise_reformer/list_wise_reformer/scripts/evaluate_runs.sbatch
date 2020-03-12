@@ -13,8 +13,8 @@ module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24
 source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
-DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha/data/output_data/sasrec_ml25m_
+DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha/data/output_data/sasrec/
 
 srun python evaluate_models.py \
-  --predictions_folders ${DIR}1/,${DIR}2/,${DIR}3/,${DIR}4/ \
+  --predictions_folders ${DIR}0/ \
   --output_folder /tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha/data/results/

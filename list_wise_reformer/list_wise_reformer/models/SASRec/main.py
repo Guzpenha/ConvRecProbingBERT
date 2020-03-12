@@ -90,6 +90,7 @@ if args.dataset_list_valid != "":
     with open(os.path.join(args.output_predictions_folder, 'config.json'), 'w') as f:
         args.task = args.dataset.split("_")[1]
         args.recommender = "SASRec"
+        args.seed = str(args.seed)
         args_dict = {}
         args_dict['args'] = vars(args)
 

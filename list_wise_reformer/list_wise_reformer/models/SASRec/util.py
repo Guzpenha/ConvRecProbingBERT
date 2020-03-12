@@ -56,7 +56,7 @@ def pred_custom_lists(model, dataset, args, sess):
             else:
                 items_to_pred.append(1)
                 idxs_unknown_item.append(idx)
-        user_preds = -model.predict(sess, [r['user_id']],
+        user_preds = model.predict(sess, [r['user_id']],
                      [seq],
                      items_to_pred)[0]
         user_preds[idxs_unknown_item] = 0
@@ -94,7 +94,7 @@ def evaluate(model, dataset, args, sess):
             while t in rated: t = np.random.randint(1, itemnum + 1)
             item_idx.append(t)
 
-        predictions = model.predict(sess, [u], [seq], item_idx)
+        predictions = -model.predict(sess, [u], [seq], item_idx)
         predictions = predictions[0]
 
         rank = predictions.argsort().argsort()[0]

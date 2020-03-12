@@ -11,6 +11,9 @@
 
 module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24
+source /home/nfs/gustavopenha/env_2.7/bin/activate # I think this does not work if
+                                                  # you are inside another env when calling sbatch
+
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
 # Creating ml25m dataset in SASRec format (run this only the first time)
@@ -22,8 +25,8 @@ REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 #    --sasrec_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models
 
 # Running SASRec
-source /home/nfs/gustavopenha/env_2.7/bin/activate
-cd models/SASRec/
+
+cd ../models/SASRec/
 MAX_LEN=200
 
 # Finetunning hyperparameters using grid-search

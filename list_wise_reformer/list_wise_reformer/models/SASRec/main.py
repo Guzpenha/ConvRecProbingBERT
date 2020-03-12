@@ -34,7 +34,7 @@ parser.add_argument('--l2_emb', default=0.0, type=float)
 parser.add_argument('--seed', default=42, type=int)
 args = parser.parse_args()
 
-tf.random.set_seed(args.random_seed)
+tf.set_random_seed(args.seed)
 
 dataset = data_partition(args.dataset)
 [user_train, user_valid, user_test, usernum, itemnum] = dataset

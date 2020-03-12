@@ -4,6 +4,7 @@ import random
 import numpy as np
 from collections import defaultdict
 import pandas as pd
+from IPython import embed
 
 def data_partition(fname):
     usernum = 0
@@ -46,7 +47,7 @@ def pred_custom_lists(model, dataset, args, sess):
             if idx == args.maxlen:
                 break
             if int(item) < model.vocab_size:
-                seq[idx] = int(item)
+                seq[-idx-1] = int(item)
         items_to_pred = []
         idxs_unknown_item = []
         for idx, item in enumerate(r['test_items'][1:-1].split(",")):

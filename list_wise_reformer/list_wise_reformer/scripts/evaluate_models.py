@@ -50,7 +50,7 @@ def main():
             qrels['model']['labels'] = labels
 
             results = evaluate_models(qrels)
-            logging.info("Model %s" % config['recommender'])
+            logging.info("Model %s (%s)" % (config['recommender'], run_folder))
             logging.info("Seed %s" % config['seed'])
 
             metrics_results = []

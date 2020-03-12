@@ -17,8 +17,8 @@ cd ../models/SASRec
 
 python main.py --dataset=train_ml25m \
   --train_dir=default \
-  --num_epochs=1 \
+  --num_epochs=10 \
   --eval_epochs=10000 \
-  --maxlen=20 \
+  --maxlen=200 \
   --dataset_list_valid valid_ml25m.csv \
   --output_predictions_folder /Users/gustavopenha/personal/recsys20/data/output_data/sasrec/1/

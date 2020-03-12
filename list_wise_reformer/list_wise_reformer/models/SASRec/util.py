@@ -94,7 +94,7 @@ def evaluate(model, dataset, args, sess):
             while t in rated: t = np.random.randint(1, itemnum + 1)
             item_idx.append(t)
 
-        predictions = -model.predict(sess, [u], [seq], item_idx)
+        predictions = model.predict(sess, [u], [seq], item_idx)
         predictions = predictions[0]
 
         rank = predictions.argsort().argsort()[0]

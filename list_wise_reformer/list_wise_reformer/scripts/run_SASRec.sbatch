@@ -26,6 +26,7 @@ source /home/nfs/gustavopenha/env_2.7/bin/activate
 cd models/SASRec/
 MAX_LEN=200
 
+# Finetunning hyperparameters using grid-search
 x=0
 for DROPOUT in 0.1
 do
@@ -44,7 +45,7 @@ do
         --eval_epochs=10000 \
         --maxlen=$MAX_LEN \
         --dataset_list_valid valid_ml25m.csv \
-        --output_predictions_folder $REPO_DIR/data/output_data/sasrec_ml25m_${x}
+        --output_predictions_folder $REPO_DIR/data/output_data/sasrec/${x}
       done
     done
   done

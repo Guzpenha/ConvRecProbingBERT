@@ -31,8 +31,10 @@ parser.add_argument('--eval_epochs', default=20, type=int)
 parser.add_argument('--num_heads', default=1, type=int)
 parser.add_argument('--dropout_rate', default=0.5, type=float)
 parser.add_argument('--l2_emb', default=0.0, type=float)
-
+parser.add_argument('--seed', default=42, type=int)
 args = parser.parse_args()
+
+tf.random.set_seed(args.random_seed)
 
 dataset = data_partition(args.dataset)
 [user_train, user_valid, user_test, usernum, itemnum] = dataset
@@ -87,8 +89,11 @@ if args.dataset_list_valid != "":
         os.makedirs(args.output_predictions_folder)
     with open(os.path.join(args.output_predictions_folder, 'config.json'), 'w') as f:
         args.task = args.dataset.split("_")[1]
-        f.write(json.dumps(vars(args)))
-        # f.write('\n'.join([str(k) + ',' + str(v) for k, v in sorted(vars(args).items(), key=lambda x: x[0])]))
+        args.recommender = "SASRec"
+        args_dict = {}
+        args_dict['args'] = vars(args)
+
+        f.write(json.dumps(args_dict, indent=4, sort_keys=True))
     f.close()
     predictions = pred_custom_lists(model, dataset, args, sess)
     df = pd.DataFrame(predictions, columns=['prediction_'+str(i)

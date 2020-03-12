@@ -45,26 +45,23 @@ class RandomRecommender():
             preds.append(user_preds)
         return preds
 
-
 class SASRecommender():
     """
      SASRec uses python version 2 and TensorFlow 1.12, so I opted to
      create a different env and use the authors code. I implemented code
-     to transform dataset to their format.
+     to transform dataset to their format (create_sasrec_data.py)
 
-     So I just run a different script (run_sasrec.sh) to save to a file
-     and then get the results from this file.
+     So I just run a different script (run_sasrec_local.sh or run_SASRec.sbatch)
+     to save to a file and then get the results from this file.
      """
-    def __init__(self, preds_file):
-        self.preds_file = preds_file
+    def __init__(self):
         pass
 
     def fit(self, sessions):
         pass
 
     def predict(self, sessions, doc_pred_columns):
-        preds_df = pd.read_csv(self.preds_file)
-        return preds_df.values
+        pass
 
 class BERT4Rec():
     # TODO: IMPLEMENT

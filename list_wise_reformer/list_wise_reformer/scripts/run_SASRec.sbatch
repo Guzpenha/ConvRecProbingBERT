@@ -39,6 +39,7 @@ do
     do
       for NUM_EPOCHS in 300
       do
+        x=$((x+1))	
         python main.py --dataset=train_ml25m \
         --dropout_rate=$DROPOUT \
         --l2_emb=$L2 \

@@ -24,12 +24,11 @@ def evaluate_models(results):
         run = {}
         qrel = {}
         for i, p in enumerate(preds):
-            if 'q{}'.format(i) not in run:
-                run['q{}'.format(i+1)] = {}
-                qrel['q{}'.format(i+1)] = {}
-                for j, _ in enumerate(range(len(p))):
-                    run['q{}'.format(i+1)]['d{}'.format(j+1)] = preds[i][j]
-                    qrel['q{}'.format(i + 1)]['d{}'.format(j + 1)] = labels[i][j]
+            run['q{}'.format(i+1)] = {}
+            qrel['q{}'.format(i+1)] = {}
+            for j, _ in enumerate(range(len(p))):
+                run['q{}'.format(i+1)]['d{}'.format(j+1)] = float(preds[i][j])
+                qrel['q{}'.format(i + 1)]['d{}'.format(j + 1)] = int(labels[i][j])
         evaluator = pytrec_eval.RelevanceEvaluator(qrel, METRICS)
         results[model]['eval'] = evaluator.evaluate(run)
     return results

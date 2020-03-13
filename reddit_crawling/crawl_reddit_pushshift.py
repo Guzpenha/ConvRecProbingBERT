@@ -4,7 +4,9 @@ import requests
 import traceback
 import json
 
-url = "https://api.pushshift.io/reddit/{}/search?limit=1000&subreddit=booksuggestions,moviesuggestions&sort=desc&before="
+# reddits = "booksuggestions,moviesuggestions"
+reddis = "musicsuggestions"
+url = "https://api.pushshift.io/reddit/{}/search?limit=1000&subreddit="+reddits+"&sort=desc&before="
 
 start_time = datetime.utcnow()
 
@@ -73,7 +75,7 @@ def downloadFromUrl(filename, object_type, nest_level = 1):
 
 def main():
 
-    # downloadFromUrl("posts.json", "submission")
+    downloadFromUrl("posts.json", "submission")
     downloadFromUrl("comments.json", "comment")
 
 if __name__ == "__main__":

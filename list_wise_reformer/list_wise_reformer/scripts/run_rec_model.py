@@ -1,5 +1,5 @@
 from list_wise_reformer.models.rec_baselines import PopularityRecommender,\
-    RandomRecommender
+    RandomRecommender, BPRMFRecommender
 from list_wise_reformer.eval.evaluation import evaluate_models
 
 import pandas as pd
@@ -9,11 +9,14 @@ import logging
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 
+from IPython import embed
+
 ex = Experiment('Recommender system experiment.')
 
 model_classes = {
     'random': RandomRecommender,
-    'popularity': PopularityRecommender
+    'popularity': PopularityRecommender,
+    'bprmf': BPRMFRecommender
 }
 
 @ex.main
@@ -22,7 +25,24 @@ def run_experiment(args):
     train = pd.read_csv(args.data_folder+args.task+"/train.csv")
     valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")
 
-    model = model_classes[args.recommender](args.seed)
+    if args.recommender == 'bprmf':
+        num_user = train.shape[0]
+        item_map = {}
+        i=0
+        for data in [train, valid]:
+            for _, r in data.iterrows():
+                for item in r['query'].split(" [SEP] "):
+                    if item not in item_map:
+                        item_map[item] = i
+                        i+=1
+                for col in data.columns[1:]:
+                    if r[col] not in item_map:
+                        item_map[r[col]] = i
+                        i+=1
+        model = model_classes[args.recommender](args.seed, num_user,
+                                                len(item_map.keys()), item_map)
+    else:
+        model = model_classes[args.recommender](args.seed)
 
     results = {}
 
@@ -31,6 +51,7 @@ def run_experiment(args):
     model.fit(train)
     logging.info("Predicting")
     preds = model.predict(valid, valid.columns[1:])
+
     results[model_name] = {}
     results[model_name]['preds'] = preds
     # only first doc is relevant -> [1, 0, 0, ..., 0]
@@ -41,6 +62,7 @@ def run_experiment(args):
     #Saving predictions to a file
     preds_df = pd.DataFrame(preds, columns=["prediction_"+str(i) for i in range(len(preds[0]))])
     preds_df.to_csv(args.output_dir+"/"+args.run_id+"/predictions.csv", index=False)
+
     results = evaluate_models(results)
 
     model_name = model.__class__.__name__

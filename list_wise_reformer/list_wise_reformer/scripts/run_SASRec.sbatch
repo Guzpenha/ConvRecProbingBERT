@@ -30,14 +30,14 @@ cd ../models/SASRec/
 MAX_LEN=200
 
 # Finetunning hyperparameters using grid-search
-x=0
-for DROPOUT in 0.5
+x=4
+for DROPOUT in 0.1 0.5 0.9
 do
-  for L2 in 0.001
+  for L2 in 0.1 0.001 0.0001
   do
-    for HIDDEN_SIZE in 50
+    for HIDDEN_SIZE in 64 128 256
     do
-      for NUM_EPOCHS in 25 50 100 200
+      for NUM_EPOCHS in 300
       do
         python main.py --dataset=train_ml25m \
         --dropout_rate=$DROPOUT \

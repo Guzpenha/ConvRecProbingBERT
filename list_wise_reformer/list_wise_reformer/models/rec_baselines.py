@@ -113,7 +113,7 @@ class BPRMFRecommender(nn.Module):
 
         return pred_i, pred_j
 
-    def fit(self, sessions, epochs=30, gpu='0'):
+    def fit(self, sessions, epochs=2, gpu='0'):
         os.environ['CUDA_VISIBLE_DEVICES'] = gpu
         if torch.cuda.is_available():
             self.cuda()
@@ -192,7 +192,7 @@ class BPRMFRecommender(nn.Module):
             pred_i, _ = model(user,
                               item_i,
                               item_j) # ns item is not important here.
-            preds.append(list(pred_i.flatten().data.numpy()))
+            preds.append(list(pred_i.flatten().data.cpu().numpy()))
 
         return preds
 

@@ -9,6 +9,8 @@
 #SBATCH --mem-per-cpu=6000
 #SBATCH --mail-type=END
 
+BATCH_SIZE=128
+
 module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24
 source /home/nfs/gustavopenha/env_2.7/bin/activate # I think this does not work if
@@ -48,6 +50,7 @@ do
         --num_epochs=$NUM_EPOCHS \
         --eval_epochs=10000 \
         --maxlen=$MAX_LEN \
+        --batch_size $BATCH_SIZE\
         --dataset_list_valid valid_ml25m.csv \
         --output_predictions_folder $REPO_DIR/data/output_data/sasrec/${x}
       done

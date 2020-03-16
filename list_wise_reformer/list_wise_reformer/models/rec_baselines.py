@@ -80,7 +80,6 @@ class BERT4Rec():
     def predict(self, sessions, doc_pred_columns):
         pass
 
-
 class BPRMFRecommender(nn.Module):
     # Code based on https://github.com/AmazingDD/recommend-lib/blob/master/BPRMFRecommender.py
 

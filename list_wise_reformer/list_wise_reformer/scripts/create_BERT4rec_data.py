@@ -21,8 +21,8 @@ def main():
                         help="the folder containing code for bert4rec")
     args = parser.parse_args()
 
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv")[0:200]
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")[0:200]
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv")
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")
 
     #transform data to SASRec format and write to files
     train_sasrec, valid_sasrec = toBERT4RecFormat(train, valid)

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 #SBATCH --partition=general
-#SBATCH --qos=short
-#SBATCH --time=02:00:00
+#SBATCH --qos=long
+#SBATCH --time=10:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
@@ -16,13 +16,13 @@ TASK=ml25m
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
-# Creating ml25m dataset in BERT4Rec format (run this only the first time)
-source /home/nfs/gustavopenha/env_slice_learning/bin/activate
-mkdir $REPO_DIR/list_wise_reformer/list_wise_reformer/models/BERT4Rec/data/
-srun python create_BERT4rec_data.py  \
-    --task ml25m \
-    --data_folder $REPO_DIR/data/recommendation/ \
-    --bert4rec_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models
+## Creating ml25m dataset in BERT4Rec format (run this only the first time)
+#source /home/nfs/gustavopenha/env_slice_learning/bin/activate
+#mkdir $REPO_DIR/list_wise_reformer/list_wise_reformer/models/BERT4Rec/data/
+#srun python create_BERT4rec_data.py  \
+#    --task ml25m \
+#    --data_folder $REPO_DIR/data/recommendation/ \
+#    --bert4rec_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models
 
 
 # Running BERT4Rec

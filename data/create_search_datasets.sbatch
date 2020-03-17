@@ -13,6 +13,12 @@ module use /opt/insy/modulefiles
 source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 srun python make_prod_search_data.py \
+  --task music \
+  --reviews_path ./search/CDs_and_Vinyl.json \
+  --items_path ./search/meta_CDs_and_Vinyl.json \
+  --output_path ./search/music/
+
+srun python make_prod_search_data.py \
   --task gr \
   --reviews_path ./search/goodreads_reviews_dedup.json \
   --items_path ./recommendation/books_names.csv \

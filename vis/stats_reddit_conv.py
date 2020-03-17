@@ -36,6 +36,12 @@ def main():
     print(df_context_response[['subreddit', 'turns',
                                'relevance_score',
                                'words_context', 'words_response']].describe())
+    for subreddit in df_context_response['subreddit'].unique():
+        print(subreddit)
+        print(df_context_response[df_context_response["subreddit"] == subreddit]
+                                    [['subreddit', 'turns','relevance_score',
+                                   'words_context', 'words_response']].describe())
+
     df_context_response[['subreddit', 'turns',
                                'relevance_score',
                                'words_context', 'words_response']].\

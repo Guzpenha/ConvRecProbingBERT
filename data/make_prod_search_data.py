@@ -97,10 +97,55 @@ def generate_product_search_good_reads(path_reviews,
                           pd.DataFrame(test, columns=cols))
     return train, test, valid
 
+def generate_product_search_amazon_music(path_reviews,
+                                       path_items,
+                                       negative_samples):
+
+    album_titles = {}
+    with open(path_items, 'r') as f:
+        for l in tqdm(f):
+            item = json.loads(l)
+            if "title" in item:
+                if len(item["title"]) < 400:
+                    album_titles[item["asin"]] = item["title"]
+
+    all_albums = list(album_titles.values())
+    instances = []
+    with open(path_reviews) as f:
+        i=0
+        for line in tqdm(f):
+            i+=1
+            review = json.loads(line)
+            if review['asin'] in album_titles and 'reviewText' in review:
+                query = review['reviewText'].replace("\n", " ")
+                relevant_doc = album_titles[review['asin']]
+                language = language_pred_model.predict(relevant_doc, k=1)
+                if len(query) > 50 and language[0][0] == '__label__en':
+                    for word in relevant_doc.lower().replace(")"," ") \
+                            .replace("(", " ") \
+                            .split(" "):
+                        if word != "by" and word not in stpwrds:
+                            # removing the book name from the review text
+                            query = query.replace(" "+word+" ", " [ITEM_NAME] ")
+                    non_relevant_docs = random.sample(all_albums, negative_samples)
+                    instances.append([query, relevant_doc] + non_relevant_docs)
+
+    train, valid, test = (instances[0: int(0.8*len(instances))],
+                        instances[int(0.8*len(instances)) : int(0.9*len(instances))],
+                        instances[int(0.9*len(instances)):])
+
+    cols = ["query","relevant_doc"] + \
+           ["non_relevant_"+str(i+1) for i in range(negative_samples)]
+
+    train, valid, test = (pd.DataFrame(train, columns=cols),
+                          pd.DataFrame(valid, columns=cols),
+                          pd.DataFrame(test, columns=cols))
+    return train, test, valid
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", default=None, type=str, required=True,
-                        help="the task to generate data for ['ml25m', 'gr']")
+                        help="the task to generate data for ['ml25m', 'gr', 'music']")
     parser.add_argument("--reviews_path", default=None, type=str, required=True,
                         help="the path with gr reviews file or paths for ml-25m")
     parser.add_argument("--items_path", default=None, type=str, required=True,
@@ -115,6 +160,10 @@ def main():
                                                                 negative_samples)
     elif args.task == 'gr':
         train, valid, test = generate_product_search_good_reads(args.reviews_path,
+                                                                args.items_path,
+                                                                negative_samples)
+    elif args.task == 'music':
+        train, valid, test = generate_product_search_amazon_music(args.reviews_path,
                                                                 args.items_path,
                                                                 negative_samples)
     else:

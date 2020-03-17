@@ -73,7 +73,7 @@ def main():
                         help="the folder containing data")
     parser.add_argument("--seed", default=None, type=str, required=True,
                         help="random seed")
-    parser.add_argument("--num_epochs", default=None, type=int,
+    parser.add_argument("--num_epochs", default=2, type=int, required=False,
                         help="Number of epochs for recommenders that do optimization.")
     parser.add_argument("--recommender", type=str, required=True,
                         help="vanilla recommender to user : "+",".join(model_classes.keys()))

@@ -1,5 +1,21 @@
 import pandas as pd
 
+def toBPRMFFormat(train_sessions_df, test_session_df):
+    num_user = train_sessions_df.shape[0]
+    item_map = {}
+    i = 0
+    for data in [train_sessions_df, test_session_df]:
+        for _, r in data.iterrows():
+            for item in r['query'].split(" [SEP] "):
+                if item not in item_map:
+                    item_map[item] = i
+                    i += 1
+            for col in data.columns[1:]:
+                if r[col] not in item_map:
+                    item_map[r[col]] = i
+                    i += 1
+    return num_user, item_map
+
 def toSASRecFormat(train_sessions_df, test_session_df):
     u_ids = {}
     u_count = 1

@@ -85,7 +85,7 @@ class BPRMFRecommender(nn.Module):
 
     def __init__(self, seed, num_user, num_item, item_map,
                  factor_num=200, lr= 0.01, wd=0.001, batch_size=4096,
-                 negative_samples_train=1):
+                 negative_samples_train=1, epochs=2):
         super(BPRMFRecommender, self).__init__()
 
         torch.manual_seed(seed)
@@ -96,6 +96,7 @@ class BPRMFRecommender(nn.Module):
         self.num_item = num_item
         self.item_map = item_map
         self.ns = negative_samples_train
+        self.epochs=epochs
 
         self.embed_user = nn.Embedding(num_user, factor_num)
         self.embed_item = nn.Embedding(num_item, factor_num)
@@ -113,7 +114,7 @@ class BPRMFRecommender(nn.Module):
 
         return pred_i, pred_j
 
-    def fit(self, sessions, epochs=2, gpu='0'):
+    def fit(self, sessions, gpu='0'):
         os.environ['CUDA_VISIBLE_DEVICES'] = gpu
         if torch.cuda.is_available():
             self.cuda()
@@ -143,7 +144,7 @@ class BPRMFRecommender(nn.Module):
         optimizer = optim.SGD(model.parameters(), lr=self.lr,
                               weight_decay=self.wd)
 
-        for _ in range(epochs):
+        for _ in range(self.epochs):
             model.train()
 
             for user, item_i, item_j in tqdm(data_loader):
@@ -195,28 +196,3 @@ class BPRMFRecommender(nn.Module):
             preds.append(list(pred_i.flatten().data.cpu().numpy()))
 
         return preds
-
-def test_popularity_recommender():
-    train_data = [["Lord of the Rings: The Two Towers The (2002) [SEP] "+
-                  "Back to the Future Part II (1989) [SEP] "+
-                  "Gattaca (1997)"],
-                  ["Lord of the Rings: The Two Towers The (2002) [SEP] " +
-                   "Gattaca (1997)"],
-                  ["Lord of the Rings: The Two Towers The (2002)"]]
-    test_data = [["Forrest Gump (1994) [SEP] " +
-                  "Silence of the Lambs, The (1991) [SEP] " +
-                  "Back to the Future (1985) [SEP] " +
-                  "Toy Story (1995)",
-                  "Lord of the Rings: The Two Towers The (2002)",
-                  "Back to the Future Part II (1989)",
-                  "Gattaca (1997)"]]
-    train_data = pd.DataFrame(train_data, columns=["query"])
-    test_data = pd.DataFrame(test_data, columns=["query",
-                                                 "candidate_doc_0",
-                                                 "candidate_doc_1",
-                                                 "candidate_doc_2"])
-
-    pop = PopularityRecommender()
-    pop.fit(train_data)
-    predictions = pop.predict(test_data, test_data.columns[1:])
-    assert predictions == [[3,1,2]]

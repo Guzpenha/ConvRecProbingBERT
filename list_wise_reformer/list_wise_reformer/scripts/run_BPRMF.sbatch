@@ -2,7 +2,7 @@
 
 #SBATCH --partition=general
 #SBATCH --qos=long
-#SBATCH --time=10:00:00
+#SBATCH --time=30:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
@@ -15,9 +15,13 @@ source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
-srun python run_rec_model.py \
-  --task ml25m \
-  --data_folder $REPO_DIR/data/recommendation/ \
-  --seed 42 \
-  --recommender bprmf \
-  --output_dir $REPO_DIR/data/output_data/bprmf
+for NUM_EPOCHS in 2 5 10 15 30 50
+do
+  srun python run_rec_model.py \
+    --num_epochs $NUM_EPOCHS \
+    --task ml25m \
+    --data_folder $REPO_DIR/data/recommendation/ \
+    --seed 42 \
+    --recommender bprmf \
+    --output_dir $REPO_DIR/data/output_data/bprmf
+done

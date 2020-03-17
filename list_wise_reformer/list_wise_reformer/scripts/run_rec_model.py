@@ -1,7 +1,7 @@
 from list_wise_reformer.models.rec_baselines import PopularityRecommender,\
     RandomRecommender, BPRMFRecommender
 from list_wise_reformer.eval.evaluation import evaluate_models
-
+from list_wise_reformer.models.utils import toBPRMFFormat
 import pandas as pd
 import argparse
 import logging
@@ -26,21 +26,10 @@ def run_experiment(args):
     valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")
 
     if args.recommender == 'bprmf':
-        num_user = train.shape[0]
-        item_map = {}
-        i=0
-        for data in [train, valid]:
-            for _, r in data.iterrows():
-                for item in r['query'].split(" [SEP] "):
-                    if item not in item_map:
-                        item_map[item] = i
-                        i+=1
-                for col in data.columns[1:]:
-                    if r[col] not in item_map:
-                        item_map[r[col]] = i
-                        i+=1
+        num_user, item_map = toBPRMFFormat(train, valid)
         model = model_classes[args.recommender](args.seed, num_user,
-                                                len(item_map.keys()), item_map)
+                                                len(item_map.keys()), item_map,
+                                                epochs=args.num_epochs)
     else:
         model = model_classes[args.recommender](args.seed)
 
@@ -84,6 +73,8 @@ def main():
                         help="the folder containing data")
     parser.add_argument("--seed", default=None, type=str, required=True,
                         help="random seed")
+    parser.add_argument("--num_epochs", default=None, type=int,
+                        help="Number of epochs for recommenders that do optimization.")
     parser.add_argument("--recommender", type=str, required=True,
                         help="vanilla recommender to user : "+",".join(model_classes.keys()))
     parser.add_argument("--output_dir", default=None, type=str, required=True,

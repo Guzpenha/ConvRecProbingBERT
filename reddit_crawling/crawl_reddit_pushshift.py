@@ -1,11 +1,9 @@
 from datetime import datetime
-from IPython import embed
 import requests
 import traceback
 import json
 
-# reddits = "booksuggestions,moviesuggestions"
-reddis = "musicsuggestions"
+reddits = "booksuggestions,moviesuggestions,musicsuggestions"
 url = "https://api.pushshift.io/reddit/{}/search?limit=1000&subreddit="+reddits+"&sort=desc&before="
 
 start_time = datetime.utcnow()
@@ -15,8 +13,7 @@ def downloadFromUrl(filename, object_type, nest_level = 1):
 
     count = 0
     handle = open(filename, 'a+')
-    # previous_epoch = int(start_time.timestamp())
-    previous_epoch = 1509432386
+    previous_epoch = int(start_time.timestamp())
     while True:
         new_url = url.format(object_type) + str(previous_epoch)
         json_data = requests.get(new_url,

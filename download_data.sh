@@ -7,6 +7,11 @@ mkdir data/dialogue
 #================================================#
 cd data/search
 
+# Download reviews from Amazon Music
+wget "http://deepyeti.ucsd.edu/jianmo/amazon/categoryFiles/CDs_and_Vinyl.json.gz"
+gunzip CDs_and_Vinyl.json.gz
+rm CDs_and_Vinyl.json.gz
+
 #Download reviews from IMDB
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1quaTeELrdydQ9uFJi_EfruuoNPJ0TnhF' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1quaTeELrdydQ9uFJi_EfruuoNPJ0TnhF" -O imdb_reviews.csv.zip && rm -rf /tmp/cookies.txt
 unzip imdb_reviews.csv.zip

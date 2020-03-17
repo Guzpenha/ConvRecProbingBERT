@@ -21,3 +21,8 @@ srun python make_conv_data.py \
   --conversations_path ./dialogue/dialogues.csv \
   --output_path ./dialogue/movies \
   --subreddit 'MovieSuggestions'
+
+  srun python make_conv_data.py \
+  --conversations_path ./dialogue/dialogues.csv \
+  --output_path ./dialogue/movies \
+  --subreddit 'musicsuggestions'

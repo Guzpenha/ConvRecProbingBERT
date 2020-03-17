@@ -25,6 +25,8 @@ logging.basicConfig(
 
 METRICS = ['recip_rank', 'ndcg_cut_10']
 
+pd.set_option('display.max_columns', None)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--predictions_folders", default=None,
@@ -76,15 +78,46 @@ def main():
                                    columns=['dataset', 'model',
                                             'seed', 'run'] + metrics_cols)
 
-    agg_df = metrics_results.groupby(["model", "dataset"]). \
+    #Calculate statistics of metrics
+    agg_df = metrics_results.groupby(["dataset", "model"]). \
         agg(['mean', 'std', 'count', 'max']). \
         reset_index().round(4)
-    col_names = ["model", "dataset"]
+    col_names = ["dataset", "model"]
     for metric in METRICS:
         col_names+=[metric+"_mean", metric+"_std",
                     metric+"_count", metric+"_max"]
     agg_df.columns =  col_names
-    agg_df.to_csv(args.output_folder+"aggregated_results.csv", index=False)
+    agg_df.sort_values(metric+"_mean").to_csv(args.output_folder+"aggregated_results.csv",
+                                              index=False, sep="\t")
+    #run statistical tests between maximum runs
+    arg_max = metrics_results. \
+        drop_duplicates(['model']).\
+        reset_index().sort_values(metric)
 
+    per_dataset_df = []
+    for dataset in arg_max["dataset"].unique():
+        seen_models = []
+        filtered_df = arg_max[arg_max["dataset"] == dataset]
+        for metric in METRICS:
+            filtered_df[metric+"_pvalues"] = [[] for _ in range(len(filtered_df))]
+            filtered_df[metric+"_statistical_tests"] = ""
+        for idx, r in filtered_df.iterrows():
+            for model_idx in seen_models:
+                for metric in METRICS:
+                    baseline_values = filtered_df.loc[model_idx, metric+"_per_query"]
+                    current_model_values = filtered_df.loc[idx, metric+"_per_query"]
+                    statistic, pvalue = scipy.stats.ttest_rel(baseline_values,
+                                                   current_model_values)
+                    filtered_df.loc[idx, metric+"_pvalues"] = filtered_df.loc[idx, metric+"_pvalues"] + [pvalue]
+                    if pvalue < 0.05:
+                        filtered_df.loc[idx, metric+"_statistical_tests"] =  \
+                            filtered_df.loc[idx, metric+"_statistical_tests"]+ \
+                            str(model_idx)
+            seen_models.append(idx)
+        per_dataset_df.append(filtered_df)
+    arg_max = pd.concat(per_dataset_df)
+    arg_max = arg_max[[c for c in arg_max.columns if "per_query" not in c]]
+    arg_max.to_csv(args.output_folder+"max_results.csv",
+                                              index=False, sep="\t")
 if __name__ == "__main__":
     main()

@@ -18,7 +18,6 @@ REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 for SEED in 42 1 2 3 4
 do
   srun python run_rec_model.py \
-    --num_epochs $NUM_EPOCHS \
     --task ml25m \
     --data_folder $REPO_DIR/data/recommendation/ \
     --seed $SEED \
@@ -27,7 +26,6 @@ do
 done
 
 srun python run_rec_model.py \
-  --num_epochs $NUM_EPOCHS \
   --task ml25m \
   --data_folder $REPO_DIR/data/recommendation/ \
   --seed 42 \

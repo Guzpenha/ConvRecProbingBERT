@@ -21,7 +21,7 @@ do
     --num_epochs $NUM_EPOCHS \
     --task ml25m \
     --data_folder $REPO_DIR/data/recommendation/ \
-    --seed 42 \
+    --seed $SEED \
     --recommender random \
     --output_dir $REPO_DIR/data/output_data/random
 done

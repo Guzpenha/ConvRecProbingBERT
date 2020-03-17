@@ -99,7 +99,7 @@ def main():
         seen_models = []
         filtered_df = arg_max[arg_max["dataset"] == dataset]
         for metric in METRICS:
-            filtered_df[metric+"_pvalues"] = [[] for _ in range(len(filtered_df))]
+            filtered_df[metric+"_pvalues"] = ""
             filtered_df[metric+"_statistical_tests"] = ""
         for idx, r in filtered_df.iterrows():
             for model_idx in seen_models:
@@ -108,7 +108,8 @@ def main():
                     current_model_values = filtered_df.loc[idx, metric+"_per_query"]
                     statistic, pvalue = scipy.stats.ttest_rel(baseline_values,
                                                    current_model_values)
-                    filtered_df.loc[idx, metric+"_pvalues"] = filtered_df.loc[idx, metric+"_pvalues"] + [pvalue]
+                    filtered_df.loc[idx, metric+"_pvalues"] = filtered_df.loc[idx, metric+"_pvalues"] + \
+                                                              "," + str(pvalue)
                     if pvalue < 0.05:
                         filtered_df.loc[idx, metric+"_statistical_tests"] =  \
                             filtered_df.loc[idx, metric+"_statistical_tests"]+ \

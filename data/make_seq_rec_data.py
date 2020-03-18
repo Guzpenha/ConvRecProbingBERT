@@ -15,7 +15,7 @@ MASK_TOKEN = tokenizer.mask_token
 negative_samples = 50
 
 def generate_seq_data_amazon_music(path, path_item_names,
-                                   negative_samples, max_users = 800000):
+                                   negative_samples):
     album_titles = {}
     with open(path_item_names, 'r') as f:
         for l in tqdm(f):
@@ -46,11 +46,8 @@ def generate_seq_data_amazon_music(path, path_item_names,
     test = []
 
     print("Sampling movies for each user")
-    valid_u = 0
     for user in tqdm([u for u in rated_albums.keys()], desc="User"):
         user_rated_albums = rated_albums[user]
-        if valid_u>= max_users:
-            break
         if len(user_rated_albums) > 2 :
             valid_u+=1
             test_album = user_rated_albums[-1]

@@ -49,7 +49,6 @@ def generate_seq_data_amazon_music(path, path_item_names,
     for user in tqdm([u for u in rated_albums.keys()], desc="User"):
         user_rated_albums = rated_albums[user]
         if len(user_rated_albums) > 2 :
-            valid_u+=1
             test_album = user_rated_albums[-1]
             valid_album = user_rated_albums[-2]
             train_albums = user_rated_albums[0:-2]

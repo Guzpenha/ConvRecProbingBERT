@@ -46,9 +46,8 @@ def generate_product_search_movie_lens(path_reviews,
     instances = []
     with open(path_reviews, 'r', encoding="utf-8") as f:
         for line in tqdm(f):
-            query = review[0:-2].lower() #remove \n
-
             movie_name, review = line.split("\t")
+            query = review[0:-2].lower() #remove \n
             relevant_doc = movie_name
             if movie_name in items_rated:
                 for word in relevant_doc.lower().replace(")"," ") \

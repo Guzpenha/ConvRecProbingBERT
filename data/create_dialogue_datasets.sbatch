@@ -14,7 +14,7 @@ source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 srun python make_conv_data.py \
   --conversations_path ./dialogue/dialogues.csv \
-  --output_path ./dialogue/movies \
+  --output_path ./dialogue/music \
   --subreddit 'musicsuggestions'
 
 srun python make_conv_data.py \

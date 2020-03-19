@@ -38,7 +38,9 @@ def generate_product_search_movie_lens(path_reviews,
         items_rated.add(r["relevant_doc"])
     for _, r in test.iterrows():
         items_rated.add(r["relevant_doc"])
-
+    del(train)
+    del(valid)
+    del(test)
     all_movies = list(movie_titles.values())
 
     instances = []
@@ -94,6 +96,9 @@ def generate_product_search_good_reads(path_reviews,
         items_rated.add(r["relevant_doc"])
     for _, r in test.iterrows():
         items_rated.add(r["relevant_doc"])
+    del(train)
+    del(valid)
+    del(test)
 
     all_books = list(book_titles.values())
     instances = []
@@ -156,6 +161,10 @@ def generate_product_search_amazon_music(path_reviews,
         items_rated.add(r["relevant_doc"])
     for _, r in test.iterrows():
         items_rated.add(r["relevant_doc"])
+
+    del(train)
+    del(valid)
+    del(test)
 
     all_albums = list(album_titles.values())
     instances = []

@@ -15,10 +15,15 @@ source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
+#Either uncomment the following, or call this using run_all.sh
+#TASK=music
+#TASK=gr
+#TASK=ml25m
+
 for SEED in 42 1 2 3 4
 do
   srun python run_rec_model.py \
-    --task ml25m \
+    --task $TASK \
     --data_folder $REPO_DIR/data/recommendation/ \
     --seed $SEED \
     --recommender random \
@@ -26,7 +31,7 @@ do
 done
 
 srun python run_rec_model.py \
-  --task ml25m \
+  --task $TASK \
   --data_folder $REPO_DIR/data/recommendation/ \
   --seed 42 \
   --recommender popularity \

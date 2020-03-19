@@ -1,14 +1,16 @@
 from IPython import embed
 import pandas as pd
-import json
 
 def main():
     base_path = "/Users/gustavopenha/personal/recsys20/data/recommendation/"
-    for path in ["gr", "ml25m"]: #["ml25m", "gr", "music"]:
+    for path in ["music"]: #["ml25m", "gr", "music"]:
         print(path)
         train, valid, test = pd.read_csv(base_path+path+"/train.csv"), \
                              pd.read_csv(base_path+path+"/valid.csv"), \
                              pd.read_csv(base_path+path+"/test.csv")
+        train, valid, test = train[~train['query'].isnull()], \
+                             valid[~valid['query'].isnull()], \
+                             test[~test['query'].isnull()]
 
         num_users = len(train)
         print("Num users", num_users)

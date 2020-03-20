@@ -119,7 +119,7 @@ flags.DEFINE_integer(
 
 flags.DEFINE_bool("use_pop_random", False, "use pop random negative samples")
 
-flags.DEFINE_bool("use_custom_lists", True, "use custom litsts for prediction, overrides use_pop_random")
+flags.DEFINE_bool("use_custom_lists", True, "use custom lists for prediction, overrides use_pop_random")
 flags.DEFINE_string("dataset_list_valid", None, "dataset with custom lists ")
 flags.DEFINE_string("output_predictions_folder", None, "dataset with custom lists ")
 
@@ -236,7 +236,17 @@ class EvalHooks(tf.train.SessionRunHook):
                       unknown_items_idx.append(i)
                       item_idx.append(vocab.token_to_ids["item_0"])
                   else:
-                      item_idx.append(vocab.token_to_ids["item_"+str(item_token)])
+                      #Still unsure about this, to check:
+                      if vocab.token_to_ids["item_"+str(item_token)] > masked_lm_log_probs_elem.shape[0]:
+                          unknown_items_idx.append(i)
+                          item_idx.append(vocab.token_to_ids["item_0"])
+                          tf.logging.info("idx > masked_lm_log_probs_elem.shape[0]")
+                      else:
+                        item_idx.append(vocab.token_to_ids["item_"+str(item_token)])
+              tf.logging.info("idx: "+str(item_idx))
+              tf.logging.info("unknown_items: " +
+                              str(np.array(self.custom_list[seq_as_key])[unknown_items_idx]))
+
               preds = masked_lm_log_probs_elem[item_idx]
               preds[unknown_items_idx] = 0
               self.all_preds.append([self.custom_list_ids[seq_as_key]]+list(preds))

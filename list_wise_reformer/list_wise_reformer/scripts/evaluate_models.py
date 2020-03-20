@@ -91,8 +91,9 @@ def main():
                                               index=False, sep="\t")
     #run statistical tests between maximum runs
     arg_max = metrics_results. \
+        sort_values(metric, ascending=False).\
         drop_duplicates(['model']).\
-        reset_index().sort_values(metric)
+        reset_index()
 
     per_dataset_df = []
     for dataset in arg_max["dataset"].unique():

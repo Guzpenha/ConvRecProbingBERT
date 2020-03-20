@@ -1,4 +1,5 @@
 import pandas as pd
+from tqdm import tqdm
 
 def toBPRMFFormat(train_sessions_df, test_session_df):
     num_user = train_sessions_df.shape[0]
@@ -61,7 +62,6 @@ def toSASRecFormat(train_sessions_df, test_session_df):
                                                            'test_items'])
     return transformed_train, transformed_test
 
-
 def toBERT4RecFormat(train_sessions_df, test_session_df):
     u_ids = {}
     u_count = 0
@@ -104,3 +104,17 @@ def toBERT4RecFormat(train_sessions_df, test_session_df):
     transformed_test = pd.DataFrame(transformed_test, columns=['seq',
                                                                'test_items'])
     return transformed_train, transformed_test
+
+def generate_anserini_json_collection(all_responses):
+    documents = []
+    doc_set = set()
+    doc_id = 0
+    for _, r in tqdm(all_responses.iterrows()):
+        for column in [c for c in all_responses.columns
+                       if "non_relevant_" in c] + ["relevant_doc"]:
+            if r[column] not in doc_set:
+                documents.append({'id': doc_id,
+                                  'contents': r[column]})
+                doc_id+=1
+                doc_set.add(r[column])
+    return documents

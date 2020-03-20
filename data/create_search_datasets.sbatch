@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:0
-#SBATCH --mem-per-cpu=15000
+#SBATCH --mem-per-cpu=20000
 #SBATCH --mail-type=END
 
 module use /opt/insy/modulefiles

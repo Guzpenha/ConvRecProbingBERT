@@ -95,6 +95,8 @@ def main():
         drop_duplicates(['model']).\
         reset_index()
 
+    arg_max = arg_max.sort_values(metric, ascending=True)
+
     per_dataset_df = []
     for dataset in arg_max["dataset"].unique():
         seen_models = []

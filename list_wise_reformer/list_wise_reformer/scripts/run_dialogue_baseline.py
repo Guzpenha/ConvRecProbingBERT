@@ -1,6 +1,7 @@
-from list_wise_reformer.models.dialogue_baselines import BM25, RM3, QL
+from list_wise_reformer.models.dialogue_baselines import BM25, RM3, QL, BERTRanker
+from list_wise_reformer.models.rec_baselines import RandomRecommender
+
 from list_wise_reformer.eval.evaluation import evaluate_models
-from list_wise_reformer.models.utils import toBPRMFFormat
 import pandas as pd
 import argparse
 import logging
@@ -13,9 +14,11 @@ from IPython import embed
 ex = Experiment('Response ranking system experiment.')
 
 model_classes = {
+    'random': RandomRecommender,
     'bm25': BM25,
     'rm3': RM3,
-    'ql': QL
+    'ql': QL,
+    'bert': BERTRanker
 }
 
 @ex.main
@@ -24,11 +27,13 @@ def run_experiment(args):
     train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n")
     valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n")
 
-    model = model_classes[args.ranker](args.data_folder+
-                                       args.task+"/anserini_index")
+    if args.ranker in ['bm25', 'ql', 'rm3']:
+        model = model_classes[args.ranker](args.data_folder+
+                                           args.task+"/anserini_index")
+    else:
+        model = model_classes[args.ranker]()
 
     results = {}
-
     model_name = model.__class__.__name__
     logging.info("Fitting {} for {}".format(model_name, args.task))
     model.fit(train)

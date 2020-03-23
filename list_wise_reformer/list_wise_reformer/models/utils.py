@@ -1,5 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
+from transformers import DataProcessor, InputExample
 
 def toBPRMFFormat(train_sessions_df, test_session_df):
     num_user = train_sessions_df.shape[0]
@@ -118,3 +119,47 @@ def generate_anserini_json_collection(all_responses):
                 doc_id+=1
                 doc_set.add(r[column])
     return documents
+
+class ConversationResponseRankingProcessor(DataProcessor):
+    """Processor for the Conversation Response Ranking datasets,
+    such as MSDialog, UDC and MANtIS."""
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        pass
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        pass
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        pass
+
+    def get_labels(self):
+        """See base class."""
+        return ["0", "1"]
+
+    def get_examples_from_sessions(self, sessions, num_neg_samples):
+        examples = []
+        for idx, row in sessions.iterrows():
+            #add relevant:
+            examples.append(
+                InputExample(guid=str(idx),
+                             text_a=row['query'],
+                             text_b=row['relevant_doc'],
+                             label="1")
+            )
+            #add non relevant
+            i=0
+            for col in [c for c in sessions.columns if "non_relevant" in c]:
+                if i> num_neg_samples:
+                    break
+                i+=1
+                examples.append(
+                    InputExample(guid=str(idx),
+                                 text_a=row["query"],
+                                 text_b=row[col],
+                                 label="0")
+                )
+        return examples

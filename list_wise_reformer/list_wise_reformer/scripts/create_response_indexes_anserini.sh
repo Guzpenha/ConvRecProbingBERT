@@ -1,4 +1,4 @@
-ANSERINI_FOLDER=/Users/gustavopenha/personal/recsys20/data/anserini
+wANSERINI_FOLDER=/Users/gustavopenha/personal/recsys20/data/anserini
 DATA_FOLDER=/Users/gustavopenha/personal/recsys20/data/dialogue/
 
 for TASK in books

@@ -15,13 +15,28 @@ source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
-for NUM_EPOCHS in 2 5 10 15 30 50
+TASK=ml25m
+#TASK=gr
+#TASK=music
+
+#for NUM_EPOCHS in 2 5 10 15 30 50
+#do
+#  srun python run_rec_model.py \
+#    --num_epochs $NUM_EPOCHS \
+#    --task ml25m \
+#    --data_folder $REPO_DIR/data/recommendation/ \
+#    --seed 42 \
+#    --recommender bprmf \
+#    --output_dir $REPO_DIR/data/output_data/bprmf
+#done
+
+for SEED in 42 1 2 3 4
 do
   srun python run_rec_model.py \
-    --num_epochs $NUM_EPOCHS \
-    --task ml25m \
+    --num_epochs 30 \
+    --task $TASK \
     --data_folder $REPO_DIR/data/recommendation/ \
-    --seed 42 \
+    --seed $SEED \
     --recommender bprmf \
     --output_dir $REPO_DIR/data/output_data/bprmf
 done

@@ -1,5 +1,7 @@
-from list_wise_reformer.models.dialogue_baselines import BM25, RM3, QL, BERTRanker
+# Due to the java error this doesnt run on HPC \/
+# from list_wise_reformer.models.dialogue_baselines import BM25, RM3, QL
 from list_wise_reformer.models.rec_baselines import RandomRecommender
+from list_wise_reformer.models.BERTRanker import BERTRanker
 
 from list_wise_reformer.eval.evaluation import evaluate_models
 import pandas as pd
@@ -15,9 +17,9 @@ ex = Experiment('Response ranking system experiment.')
 
 model_classes = {
     'random': RandomRecommender,
-    'bm25': BM25,
-    'rm3': RM3,
-    'ql': QL,
+    # 'bm25': BM25,
+    # 'rm3': RM3,
+    # 'ql': QL,
     'bert': BERTRanker
 }
 

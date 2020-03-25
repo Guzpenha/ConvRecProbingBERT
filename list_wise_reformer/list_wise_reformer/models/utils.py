@@ -106,6 +106,12 @@ def toBERT4RecFormat(train_sessions_df, test_session_df):
                                                                'test_items'])
     return transformed_train, transformed_test
 
+def toU2UIMNFormat(train_sessions_df, test_session_df):
+    pass #TODO: implement
+
+def toDAMFormat(train_sessions_df, test_session_df):
+    pass #TODO: implement
+
 def generate_anserini_json_collection(all_responses):
     documents = []
     doc_set = set()

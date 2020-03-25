@@ -243,7 +243,6 @@ class EvalHooks(tf.train.SessionRunHook):
                           tf.logging.info("idx > masked_lm_log_probs_elem.shape[0]")
                       else:
                         item_idx.append(vocab.token_to_ids["item_"+str(item_token)])
-              tf.logging.info("idx: "+str(item_idx))
               tf.logging.info("unknown_items: " +
                               str(np.array(self.custom_list[seq_as_key])[unknown_items_idx]))
 

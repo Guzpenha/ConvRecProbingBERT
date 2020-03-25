@@ -40,7 +40,7 @@ def main():
         "output_predictions_folder": args.output_predictions_folder,
             # "/Users/gustavopenha/personal/recsys20/data/output_data/dam/1",
         # "data_path": "./data/ubuntu/data_small.pkl",
-        "data_path": "./data/"+args.task+"/data_small.pkl",
+        "data_path": "./data/"+args.task+"/data.pkl",
         # "save_path": "./output/ubuntu/temp/",
         "save_path": "./output/"+args.task+"/temp/",
         # "word_emb_init": "./data/word_embedding.pkl",

@@ -34,9 +34,10 @@ def main():
     with open(args.dam_folder+"/DAM/data/"+args.task+"/data.pkl", 'wb') as f:
         pickle.dump(dataset, f, protocol=2)
 
-    with open(args.dam_folder+"/DAM/data/"+args.task+"/word2id", 'w') as f:
+    with open(args.dam_folder+"/DAM/data/"+args.task+"/word2id", 'wb') as f:
         for w, id in vocab.items():
-            f.write(w+"\t"+str(id)+"\n")
+            line = w+"\t"+str(id)+"\n"
+            f.write(line.encode("utf8"))
 
 if __name__ == "__main__":
     main()

@@ -134,11 +134,7 @@ def train(conf, _model):
 
         print("running evaluation on val")
         all_preds = []
-        i=0
         for batch_index in xrange(val_batch_num):
-            if i==5:
-                break
-            i+=1
             feed = {
                 _model.turns: val_batches["turns"][batch_index],
                 _model.tt_turns_len: val_batches["tt_turns_len"][batch_index],

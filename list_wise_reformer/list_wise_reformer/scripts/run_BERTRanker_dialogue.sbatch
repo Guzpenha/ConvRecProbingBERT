@@ -26,6 +26,6 @@ do
     --task $TASK \
     --data_folder $REPO_DIR/data/dialogue/ \
     --seed $SEED \
-    --recommender bert \
+    --ranker bert \
     --output_dir $REPO_DIR/data/output_data/bert4dialogue
 done

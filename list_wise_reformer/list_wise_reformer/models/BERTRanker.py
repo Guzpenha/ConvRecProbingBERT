@@ -2,6 +2,7 @@ import torch
 import random
 from tqdm import tqdm
 import numpy as np
+import logging
 from scipy.special import softmax
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)

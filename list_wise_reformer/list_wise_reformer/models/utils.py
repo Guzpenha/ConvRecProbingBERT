@@ -1,12 +1,14 @@
+from IPython import embed
 import pandas as pd
 from tqdm import tqdm
 from transformers import DataProcessor, InputExample
+from nltk.tokenize import TweetTokenizer
 
-def toBPRMFFormat(train_sessions_df, test_session_df):
+def toBPRMFFormat(train_sessions_df, valid_session_df):
     num_user = train_sessions_df.shape[0]
     item_map = {}
     i = 0
-    for data in [train_sessions_df, test_session_df]:
+    for data in [train_sessions_df, valid_session_df]:
         for _, r in data.iterrows():
             for item in r['query'].split(" [SEP] "):
                 if item not in item_map:
@@ -18,7 +20,7 @@ def toBPRMFFormat(train_sessions_df, test_session_df):
                     i += 1
     return num_user, item_map
 
-def toSASRecFormat(train_sessions_df, test_session_df):
+def toSASRecFormat(train_sessions_df, valid_session_df):
     u_ids = {}
     u_count = 1
     i_ids = {}
@@ -36,7 +38,7 @@ def toSASRecFormat(train_sessions_df, test_session_df):
             transformed_train.append([u_ids[user], i_ids[item]])
 
     transformed_test = []
-    for user, r in test_session_df.iterrows():
+    for user, r in valid_session_df.iterrows():
         if r['relevant_doc'] not in i_ids:
             i_ids[r['relevant_doc']] = i_count
             i_count+=1
@@ -48,7 +50,7 @@ def toSASRecFormat(train_sessions_df, test_session_df):
                 i_count+=1
             seq.append(i_ids[item])
         test_items = []
-        for c in test_session_df.columns:
+        for c in valid_session_df.columns:
             item = r[c]
             if item not in i_ids:
                 i_ids[item]=i_count
@@ -63,7 +65,7 @@ def toSASRecFormat(train_sessions_df, test_session_df):
                                                            'test_items'])
     return transformed_train, transformed_test
 
-def toBERT4RecFormat(train_sessions_df, test_session_df):
+def toBERT4RecFormat(train_sessions_df, valid_session_df):
     u_ids = {}
     u_count = 0
     i_ids = {}
@@ -81,7 +83,7 @@ def toBERT4RecFormat(train_sessions_df, test_session_df):
             transformed_train.append([u_ids[user], i_ids[item]])
 
     transformed_test = []
-    for user, r in test_session_df.iterrows():
+    for user, r in valid_session_df.iterrows():
         if r['relevant_doc'] not in i_ids:
             i_ids[r['relevant_doc']] = i_count
             i_count+=1
@@ -93,7 +95,7 @@ def toBERT4RecFormat(train_sessions_df, test_session_df):
                 i_count+=1
             seq.append(i_ids[item])
         test_items = []
-        for c in test_session_df.columns:
+        for c in valid_session_df.columns:
             item = r[c]
             if item not in i_ids:
                 i_ids[item]=i_count
@@ -106,11 +108,60 @@ def toBERT4RecFormat(train_sessions_df, test_session_df):
                                                                'test_items'])
     return transformed_train, transformed_test
 
-def toU2UIMNFormat(train_sessions_df, test_session_df):
+def toU2UIMNFormat(train_sessions_df, valid_session_df):
     pass #TODO: implement
 
-def toDAMFormat(train_sessions_df, test_session_df):
-    pass #TODO: implement
+def toDAMFormat(train_sessions_df, valid_session_df, number_ns_train=1):
+    '''
+    Pickle data = {'y': [[1, 0]],
+    'c':[[word_id1, word_id2]],
+    'r': [[word_id1, word_id2]],}
+    '''
+    tknzr = TweetTokenizer(strip_handles=True, reduce_len=True)
+
+    def add_sentence_to_vocab(sentence, vocab, id, tknzr):
+        for word in tknzr.tokenize(sentence):
+            if word not in word_to_id:
+                vocab[word] = id
+                id+=1
+        return id
+
+    def word_to_ids(sentence, vocab, tknzr):
+        return [vocab[word] for word in tknzr.tokenize(sentence)]
+
+    #create vocabulary
+    word_to_id = {'UTTERANCE_SEP' :  0 }
+    id=1
+    for df in [train_sessions_df, valid_session_df]:
+        for _, r in tqdm(df.iterrows()):
+            query = r['query']
+            id = add_sentence_to_vocab(query, word_to_id, id, tknzr)
+            for column in [c for c in train_sessions_df.columns
+                               if "non_relevant_" in c] + ["relevant_doc"]:
+                id = add_sentence_to_vocab(r[column], word_to_id, id, tknzr)
+
+
+    #create data to pickle
+    train_dict = { 'y' : [], 'c' : [], 'r' : [] }
+    valid_dict = { 'y' : [], 'c' : [], 'r' : [] }
+
+    for set_dict, df, limit_ns in [(train_dict, train_sessions_df, True),
+                         (valid_dict, valid_session_df, False)]:
+        for _, r in tqdm(df.iterrows()):
+            #adding relevant instance
+            set_dict['y'].append(1)
+            set_dict['c'].append(word_to_ids(r['query'], word_to_id, tknzr))
+            set_dict['r'].append(word_to_ids(r['relevant_doc'], word_to_id, tknzr))
+
+            for i, column in enumerate([c for c in df.columns
+                           if "non_relevant_" in c]):
+                if i == number_ns_train and limit_ns:
+                    break
+                set_dict['y'].append(0)
+                set_dict['c'].append(word_to_ids(r['query'], word_to_id, tknzr))
+                set_dict['r'].append(word_to_ids(r[column], word_to_id, tknzr))
+
+    return (train_dict, valid_dict, valid_dict), word_to_id
 
 def generate_anserini_json_collection(all_responses):
     documents = []

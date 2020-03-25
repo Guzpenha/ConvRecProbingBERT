@@ -127,7 +127,7 @@ class BERTRanker():
                         logs["loss"] = loss_scalar
 
                         for key, value in logs.items():
-                            logging.info(key, value, global_step)
+                            logging.info(str(key) +": "+ str(value) + ". step: "+ str(global_step))
 
     def predict(self, sessions, prediction_cols):
         logging.info("Generating test instances")

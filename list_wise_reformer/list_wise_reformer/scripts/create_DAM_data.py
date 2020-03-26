@@ -23,8 +23,8 @@ def main():
                         help="the folder containing code for bert4rec")
     args = parser.parse_args()
 
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv")
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv")
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n")
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n")
 
     #transform data to DAM format and write to files
     dataset, vocab = toDAMFormat(train, valid)

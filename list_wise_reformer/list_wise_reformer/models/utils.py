@@ -108,8 +108,77 @@ def toBERT4RecFormat(train_sessions_df, valid_session_df):
                                                                'test_items'])
     return transformed_train, transformed_test
 
+def add_sentence_to_vocab(sentence, vocab, id, tknzr):
+    for word in tknzr.tokenize(sentence):
+        if word not in vocab:
+            vocab[word] = id
+            id += 1
+    return id
+
+def word_to_ids(sentence, vocab, tknzr):
+    return [vocab[word] for word in tknzr.tokenize(sentence)]
+
+def add_sentence_to_char_vocab(sentence, vocab, id):
+    for c in sentence:
+        if c not in vocab:
+            vocab[c] = id
+            id+=1
+    return id
+
 def toU2UIMNFormat(train_sessions_df, valid_session_df):
-    pass #TODO: implement
+    # Create vocab
+    char_vocab = {}
+    char_id = 0
+    id=1
+    vocab = {'<PAD>': 0, 'UNKNOWN' : 1, '__eou__' : 2, '__eot__': 3}
+    tknzr = TweetTokenizer(strip_handles=True, reduce_len=True)
+    for df in [train_sessions_df, valid_session_df]:
+        for _, r in tqdm(df.iterrows()):
+            query = r['query']
+            id = add_sentence_to_vocab(query, vocab, id, tknzr)
+            for column in [c for c in train_sessions_df.columns
+                               if "non_relevant_" in c] + ["relevant_doc"]:
+                id = add_sentence_to_vocab(r[column], vocab, id, tknzr)
+
+    # Create pool of responses
+    doc_id = 0
+    responses = {}
+    for df in [train_sessions_df, valid_session_df]:
+        for idx, r in df.iterrows():
+            for doc_col in df.columns[1:]:
+                tokenized_doc = ' '.join(tknzr.tokenize(r[doc_col]))
+                if tokenized_doc not in responses:
+                    responses[tokenized_doc] = str(doc_id)
+                    doc_id+=1
+
+
+    train = []
+    valid = []
+    for df, output in [(train_sessions_df, train),
+                       (valid_session_df, valid)]:
+        for idx, r in df.iterrows():
+            query = r['query'].replace("[UTTERANCE_SEP]", "__eou__")
+            tokenized_q = ' '.join(tknzr.tokenize(query))
+            char_id = add_sentence_to_char_vocab(tokenized_q, char_vocab, char_id)
+
+            tokenized_doc = ' '.join(tknzr.tokenize(r['relevant_doc']))
+            char_id = add_sentence_to_char_vocab(tokenized_doc, char_vocab, char_id)
+            positive_doc_id = responses[tokenized_doc]
+
+            neg_ids = []
+            for neg_col in [c for c in train_sessions_df.columns
+                           if "non_relevant_" in c]:
+                tokenized_doc = ' '.join(tknzr.tokenize(r[neg_col]))
+                char_id = add_sentence_to_char_vocab(tokenized_doc, char_vocab, char_id)
+                neg_ids.append(responses[tokenized_doc])
+
+            instance = [idx,
+                        tokenized_q,
+                        positive_doc_id,
+                        '|'.join(neg_ids)]
+            output.append(instance)
+
+    return train, valid, responses, vocab, char_vocab
 
 def toDAMFormat(train_sessions_df, valid_session_df, number_ns_train=1):
     '''
@@ -118,16 +187,6 @@ def toDAMFormat(train_sessions_df, valid_session_df, number_ns_train=1):
     'r': [[word_id1, word_id2]],}
     '''
     tknzr = TweetTokenizer(strip_handles=True, reduce_len=True)
-
-    def add_sentence_to_vocab(sentence, vocab, id, tknzr):
-        for word in tknzr.tokenize(sentence):
-            if word not in word_to_id:
-                vocab[word] = id
-                id+=1
-        return id
-
-    def word_to_ids(sentence, vocab, tknzr):
-        return [vocab[word] for word in tknzr.tokenize(sentence)]
 
     #create vocabulary
     word_to_id = {'UTTERANCE_SEP' :  0 }

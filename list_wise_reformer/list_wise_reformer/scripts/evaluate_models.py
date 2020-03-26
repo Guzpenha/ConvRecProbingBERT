@@ -35,6 +35,8 @@ def main():
                              " and 'predictions.csv'")
     parser.add_argument("--output_folder", default=None, type=str, required=True,
                         help="the folder to write results")
+    parser.add_argument("--model_type", default='recommender', type=str, required=False,
+                        help="the type of models analyzed ['recommender', 'ranker']")
     args = parser.parse_args()
 
     run_folders = args.predictions_folders.split(",")
@@ -52,7 +54,7 @@ def main():
             qrels['model']['labels'] = labels
 
             results = evaluate_models(qrels)
-            logging.info("Model %s (%s)" % (config['recommender'], run_folder))
+            logging.info("Model %s (%s)" % (config[args.model_type], run_folder))
             logging.info("Seed %s" % config['seed'])
 
             metrics_results = []
@@ -69,7 +71,7 @@ def main():
                 logging.info("%s: %.4f" % (metric, res))
 
             all_res.append([config['task'],
-                            config['recommender'],
+                            config[args.model_type],
                             config['seed'],
                             run_folder] + metrics_results)
 
@@ -87,7 +89,7 @@ def main():
         col_names+=[metric+"_mean", metric+"_std",
                     metric+"_count", metric+"_max"]
     agg_df.columns =  col_names
-    agg_df.sort_values(metric+"_mean").to_csv(args.output_folder+"aggregated_results.csv",
+    agg_df.sort_values(metric+"_mean").to_csv(args.output_folder+args.model_type+"_aggregated_results.csv",
                                               index=False, sep="\t")
     #run statistical tests between maximum runs
     arg_max = metrics_results. \
@@ -121,7 +123,7 @@ def main():
         per_dataset_df.append(filtered_df)
     arg_max = pd.concat(per_dataset_df)
     arg_max = arg_max[[c for c in arg_max.columns if "per_query" not in c]]
-    arg_max.to_csv(args.output_folder+"max_results.csv",
+    arg_max.to_csv(args.output_folder+args.model_type+"_max_results.csv",
                                               index=False, sep="\t")
 if __name__ == "__main__":
     main()

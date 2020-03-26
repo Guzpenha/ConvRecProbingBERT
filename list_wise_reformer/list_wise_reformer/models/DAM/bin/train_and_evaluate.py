@@ -16,8 +16,10 @@ from tqdm import tqdm
 def train(conf, _model):
     
     if conf['rand_seed'] is not None:
-        np.random.seed(conf['rand_seed'])
-
+        np.random.seed()
+        tf.set_random_seed(
+            conf['rand_seed']
+        )
     if not os.path.exists(conf['save_path']):
         os.makedirs(conf['save_path'])
 
@@ -25,7 +27,7 @@ def train(conf, _model):
     print('starting loading data')
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
     train_data, val_data, test_data = pickle.load(open(conf["data_path"], 'rb'))    
-    # embed()
+
     print('finish loading data')
     print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
 

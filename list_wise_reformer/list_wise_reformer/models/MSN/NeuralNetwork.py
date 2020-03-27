@@ -9,8 +9,6 @@ from IPython import embed
 import pandas as pd
 import json
 import os
-torch.backends.cudnn.benchmark = True
-
 
 class NeuralNetwork(nn.Module):
 

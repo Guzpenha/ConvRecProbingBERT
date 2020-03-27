@@ -3,9 +3,6 @@ import argparse
 import pickle
 import torch
 from MSN import MSN
-import os
-from IPython import embed
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 task_dic = {
     'ubuntu':'./dataset/ubuntu_data/',

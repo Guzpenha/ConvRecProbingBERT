@@ -4,7 +4,6 @@ import torch.nn.init as init
 import torch.nn.functional as F
 from NeuralNetwork import NeuralNetwork
 
-
 class TransformerBlock(nn.Module):
 
     def __init__(self, input_size, is_layer_norm=False):

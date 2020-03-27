@@ -1,3 +1,4 @@
+import os
 import tensorflow as tf
 import numpy as np
 from IPython import embed
@@ -6,12 +7,17 @@ import time
 import datetime
 import operator
 from collections import defaultdict
-from model import metrics
-from model import data_helpers
-from model.model_U2U_IMN import U2U_IMN
+import metrics
+import data_helpers
+from model_U2U_IMN import U2U_IMN
+# from model import metrics
+# from model import data_helpers
+# from model.model_U2U_IMN import U2U_IMN
 from tqdm import tqdm
 import pandas as pd
 import json
+
+
 
 #My params
 tf.flags.DEFINE_string("output_predictions_folder", "", "path to output predictions")

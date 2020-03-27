@@ -11,27 +11,26 @@
 
 module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24
-source /home/nfs/gustavopenha/env_2.7/bin/activate
+source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 TASK=music
 
 # Creating TASK dataset in DAM format (run this only the first time)
-#source /home/nfs/gustavopenha/env_slice_learning/bin/activate
-#srun python create_DAM_data.py  \
-#    --task ${TASK} \
-#    --data_folder $REPO_DIR/data/dialogue/ \
-#    --dam_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models/
+srun python create_MSN_data.py  \
+    --task ${TASK} \
+    --data_folder $REPO_DIR/data/dialogue/ \
+    --msn_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models/
 
-cd ../models/DAM/
+cd ../models/MSN/
 
 x=0
 for SEED in 42
 do
-srun python main.py \
+srun python run.py \
     --seed $SEED \
-    --num_epochs 10 \
-    --output_predictions_folder $REPO_DIR/data/output_data/dam/${x} \
+    --epochs 10 \
+    --output_predictions_folder $REPO_DIR/data/output_data/msn/${x} \
     --task $TASK
 x=$((x+1))
 done

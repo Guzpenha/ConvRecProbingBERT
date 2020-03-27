@@ -3,6 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 from transformers import DataProcessor, InputExample
 from nltk.tokenize import TweetTokenizer
+import numpy as np
 
 def toBPRMFFormat(train_sessions_df, valid_session_df):
     num_user = train_sessions_df.shape[0]
@@ -221,6 +222,67 @@ def toDAMFormat(train_sessions_df, valid_session_df, number_ns_train=1):
                 set_dict['r'].append(word_to_ids(r[column], word_to_id, tknzr))
 
     return (train_dict, valid_dict, valid_dict), word_to_id
+
+def toMSNFormat(train_sessions_df, valid_session_df, number_ns_train=1):
+    tknzr = TweetTokenizer(strip_handles=True, reduce_len=True)
+
+    #create vocabulary
+    word_to_id = {'<PAD>' :  0 }
+    id=1
+    for df in [train_sessions_df, valid_session_df]:
+        for _, r in tqdm(df.iterrows()):
+            query = r['query']
+            id = add_sentence_to_vocab(query, word_to_id, id, tknzr)
+            for column in [c for c in train_sessions_df.columns
+                               if "non_relevant_" in c] + ["relevant_doc"]:
+                id = add_sentence_to_vocab(r[column], word_to_id, id, tknzr)
+
+    train = ([], [], [])
+    valid = ([], [], [])
+    vocab_embed = (word_to_id, [np.random.uniform(-1,1,200)
+                           for _ in range(len(word_to_id))])
+    max_words = 50
+    max_utterances = 10
+
+    def split_and_pad_query(query, max_utterances, max_words, tknzr, word_to_id):
+        splitted_and_padded_c = np.zeros((max_utterances, max_words), dtype=int).tolist()
+        for idx, utterance in enumerate(query.split("[UTTERANCE_SEP]")):
+            if idx > max_utterances:
+                break
+            for j, id in enumerate(word_to_ids(utterance, word_to_id, tknzr)):
+                if j > max_words:
+                    break
+                splitted_and_padded_c[max_utterances - 1 - idx][max_words - 1 - j] = id
+        return splitted_and_padded_c
+
+    def pad_document(doc, max_words, tknzr, word_to_id):
+        padded_r = np.zeros(max_words, dtype=int).tolist()
+        for j, id in enumerate(word_to_ids(doc, word_to_id, tknzr)):
+            if j > max_words:
+                break
+            padded_r[max_words - 1 - j] = id
+        return padded_r
+
+    for set_triplet, df, limit_ns in [(train, train_sessions_df, True),
+                                    (valid, valid_session_df, False)]:
+        for _, r in tqdm(df.iterrows()):
+            #adding relevant instance
+            splitted_and_padded_c = split_and_pad_query(r['query'], max_utterances, max_words, tknzr, word_to_id)
+            padded_r = pad_document(r['relevant_doc'], max_words, tknzr, word_to_id)
+            set_triplet[0].append(splitted_and_padded_c)
+            set_triplet[1].append(padded_r)
+            set_triplet[2].append(1)
+
+            for i, column in enumerate([c for c in df.columns
+                                        if "non_relevant_" in c]):
+                if i == number_ns_train and limit_ns:
+                    break
+                padded_r = pad_document(r[column], max_words, tknzr, word_to_id)
+                set_triplet[0].append(splitted_and_padded_c)
+                set_triplet[1].append(padded_r)
+                set_triplet[2].append(0)
+
+    return train, valid, vocab_embed
 
 def generate_anserini_json_collection(all_responses):
     documents = []

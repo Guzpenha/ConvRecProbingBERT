@@ -50,7 +50,7 @@ class NeuralNetwork(nn.Module):
         self.loss_func = nn.BCELoss()
         self.optimizer = optim.Adam(self.parameters(), lr=self.args.learning_rate, weight_decay=self.args.l2_reg)
 
-        for epoch in range(self.args.epochs):
+        for epoch in range(int(self.args.epochs)):
             print("\nEpoch ", epoch+1, "/", self.args.epochs)
             avg_loss = 0
 

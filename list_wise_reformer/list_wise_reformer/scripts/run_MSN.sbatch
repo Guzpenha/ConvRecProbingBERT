@@ -9,20 +9,20 @@
 #SBATCH --mem-per-cpu=6000
 #SBATCH --mail-type=END
 
+cd ../models/MSN/
+
+source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24
-source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 TASK=music
 
 # Creating TASK dataset in DAM format (run this only the first time)
-srun python create_MSN_data.py  \
-    --task ${TASK} \
-    --data_folder $REPO_DIR/data/dialogue/ \
-    --msn_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models/
-
-cd ../models/MSN/
+#srun python create_MSN_data.py  \
+#    --task ${TASK} \
+#    --data_folder $REPO_DIR/data/dialogue/ \
+#    --msn_folder $REPO_DIR/list_wise_reformer/list_wise_reformer/models/
 
 x=0
 for SEED in 42

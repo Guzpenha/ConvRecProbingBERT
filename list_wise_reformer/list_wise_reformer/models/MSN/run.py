@@ -57,7 +57,7 @@ parser.add_argument("--l2_reg",
                     help="The l2 regularization.")
 parser.add_argument("--epochs",
                     default=1,
-                    type=float,
+                    type=int,
                     help="Total number of training epochs to perform.")
 parser.add_argument("--save_path",
                     default="./checkpoint/",

@@ -21,7 +21,7 @@ class NeuralNetwork(nn.Module):
         self.optimizer = None
         self.best_result = [0, 0, 0, 0, 0, 0]
         self.metrics = Metrics(self.args.score_file_path)
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.all_preds = []
 
     def forward(self):
@@ -30,10 +30,7 @@ class NeuralNetwork(nn.Module):
 
     def train_step(self, i, data):
         with torch.no_grad():
-            if torch.cuda.is_available():
-                batch_u, batch_r, batch_y = (item.cuda(device=self.device) for item in data)
-            else:
-                batch_u, batch_r, batch_y = (item.cpu() for item in data)
+            batch_u, batch_r, batch_y = (item.to(self.device) for item in data)
 
         self.optimizer.zero_grad()
         logits = self.forward(batch_u, batch_r)
@@ -47,7 +44,7 @@ class NeuralNetwork(nn.Module):
     def fit(self, X_train_utterances,  X_train_responses, y_train,
             X_dev_utterances, X_dev_responses, y_dev):
 
-        if torch.cuda.is_available(): self.cuda()
+        self.to(self.device)
 
         dataset = DialogueDataset(X_train_utterances, X_train_responses, y_train)
         dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True)
@@ -77,6 +74,7 @@ class NeuralNetwork(nn.Module):
                     utils.clip_grad_norm_(self.parameters(), max_norm=self.init_clip_max_norm)
 
                 avg_loss += loss.item()
+
             cnt = len(y_train) // self.args.batch_size + 1
             print("Average loss:{:.6f} ".format(avg_loss/cnt))
             self.evaluate(X_dev_utterances, X_dev_responses, y_dev)
@@ -146,18 +144,16 @@ class NeuralNetwork(nn.Module):
 
         for i, data in enumerate(dataloader):
             with torch.no_grad():
-                if torch.cuda.is_available():
-                    batch_u, batch_r = (item.cuda() for item in data)
-                else:
-                    batch_u, batch_r = (item.cpu() for item in data)
+                batch_u, batch_r = (item.to(self.device) for item in data)
 
             logits = self.forward(batch_u, batch_r)
             self.all_preds.append(logits.data.cpu().numpy().tolist())
             y_pred += logits.data.cpu().numpy().tolist()
+
         return y_pred
 
 
     def load_model(self, path):
         self.load_state_dict(state_dict=torch.load(path))
-        if torch.cuda.is_available(): self.cuda()
-
+        # if torch.cuda.is_available(): self.cuda()
+        self.to(self.device)

@@ -24,7 +24,7 @@ def main():
     args = parser.parse_args()
 
     train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n")
-    valid = pd.read_csv(args.data_folder+args.task+"/test.csv", lineterminator= "\n")
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n")
 
     #transform data to DAM format and write to files
     train, valid, vocab_embed = toMSNFormat(train, valid)

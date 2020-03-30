@@ -48,7 +48,7 @@ def generate_seq_data_amazon_music(path, path_item_names,
     print("Sampling movies for each user")
     for user in tqdm([u for u in rated_albums.keys()], desc="User"):
         user_rated_albums = rated_albums[user]
-        if len(user_rated_albums) > 2 :
+        if len(user_rated_albums) > 3 :
             test_album = user_rated_albums[-1]
             valid_album = user_rated_albums[-2]
             train_albums = user_rated_albums[0:-2]
@@ -103,7 +103,7 @@ def generate_seq_data_movie_lens(path, path_item_names, negative_samples):
     print("Sampling movies for each user")
     for user in tqdm(seen_movies.keys(), desc="User"):
         user_seen_movies = seen_movies[user]
-        if len(user_seen_movies) > 2 :
+        if len(user_seen_movies) > 3 :
             test_movie = id_to_name[user_seen_movies[-1]]
             valid_movie = id_to_name[user_seen_movies[-2]]
             train_movies = [id_to_name[m] for m in user_seen_movies[0:-2]]
@@ -182,7 +182,7 @@ def generate_seq_data_good_reads(path, path_item_names,
     print("Sampling books for each user")
     for user in tqdm([u for u in users_read_books.keys()][:max_users], desc="User"):
         user_read_books = users_read_books[user]
-        if len(user_read_books) > 2 :
+        if len(user_read_books) > 3 :
             test_book = user_read_books[-1]
             valid_book = user_read_books[-2]
             train_books = user_read_books[0:-2]

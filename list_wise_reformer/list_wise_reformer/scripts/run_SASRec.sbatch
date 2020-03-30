@@ -12,7 +12,7 @@
 MAX_LEN=200
 BATCH_SIZE=128
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
-TASK=ml25m
+#TASK=ml25m
 
 module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24
@@ -55,7 +55,7 @@ source /home/nfs/gustavopenha/env_2.7/bin/activate # I think this does not work 
 #done
 
 cd ../models/SASRec/
-x=22
+#x=22
 for SEED in 42 1 2 3 4
 do
 x=$((x+1))

@@ -15,7 +15,7 @@ source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
-TASK=ml25m
+#TASK=ml25m
 #TASK=gr
 #TASK=music
 

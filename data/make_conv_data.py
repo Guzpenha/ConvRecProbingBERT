@@ -8,6 +8,7 @@ from tqdm import tqdm
 import random
 
 negative_samples = 50
+random.seed(42)
 
 def generate_conv_data(in_path, subreddit):
     df_conv = pd.read_csv(in_path, lineterminator= "\n")
@@ -45,11 +46,12 @@ def generate_conv_data(in_path, subreddit):
         ] + list(candidates))
         index_subreddit.append([idx, r['subreddit']])
 
+    random.shuffle(instances)
     train, valid, test = (instances[0: int(0.8*len(instances))],
                         instances[int(0.8*len(instances)) : int(0.9*len(instances))],
                         instances[int(0.9*len(instances)):])
 
-    cols = ["query","relevant_doc"] + \
+    cols = ["query", "relevant_doc"] + \
            ["non_relevant_"+str(i+1) for i in range(negative_samples)]
 
     train, valid, test = (pd.DataFrame(train, columns=cols),
@@ -65,7 +67,7 @@ def main():
     parser.add_argument("--conversations_path", default=None, type=str, required=True,
                         help="the path with context-response pairs")
     parser.add_argument("--subreddit", default=None, type=str, required=True,
-                        help="the subreddit to generate training instances ['MovieSuggestions', 'booksuggestions']")
+                        help="the subreddit to generate training instances ['MovieSuggestions', 'booksuggestions', musicsuggestions]")
     parser.add_argument("--output_path", default=None, type=str, required=True,
                         help="the path to_write files")
     args = parser.parse_args()

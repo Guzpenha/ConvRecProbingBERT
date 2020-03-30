@@ -109,6 +109,58 @@ def toBERT4RecFormat(train_sessions_df, valid_session_df):
                                                                'test_items'])
     return transformed_train, transformed_test
 
+def toBERT4RecPytorchFormat(train_sessions_df, valid_session_df):
+    train = {}
+    val = {}
+    u_ids = {}
+    u_count = 0
+    i_ids = {}
+    i_count = 0
+
+    for user, r in tqdm(train_sessions_df.iterrows()):
+        user=user+1
+        if user not in u_ids:
+            u_ids[user]=u_count
+            u_count+=1
+        train[u_ids[user]] = []
+        for item in r['query'].split(" [SEP] "):
+            if item not in i_ids:
+                i_ids[item]=i_count
+                i_count+=1
+            train[u_ids[user]].append(i_ids[item])
+
+    for user, r in tqdm(valid_session_df.iterrows()):
+        user = user + 1
+        if r['relevant_doc'] not in i_ids:
+            i_ids[r['relevant_doc']] = i_count
+            i_count+=1
+        rel_item = i_ids[r['relevant_doc']]
+        seq = []
+        for item in r['query'].split(" [SEP] "):
+            if item not in i_ids:
+                i_ids[item]=i_count
+                i_count+=1
+            seq.append(i_ids[item])
+        test_items = []
+        for c in valid_session_df.columns:
+            item = r[c]
+            if item not in i_ids:
+                i_ids[item]=i_count
+                i_count+=1
+            if "non_relevant_" in c:
+                test_items.append(i_ids[item])
+        val[u_ids[user]]= [rel_item] + test_items
+
+    smap = { i+1 : i for i in range(len(i_ids))}
+    dataset = {
+        'train': train,
+        'val': val,
+        'test': val,
+        'umap': u_ids,
+        'smap': smap
+    }
+    return dataset
+
 def add_sentence_to_vocab(sentence, vocab, id, tknzr):
     for word in tknzr.tokenize(sentence):
         if word not in vocab:

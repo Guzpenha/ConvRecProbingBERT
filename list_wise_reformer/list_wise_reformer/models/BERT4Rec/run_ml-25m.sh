@@ -7,11 +7,11 @@ max_predictions_per_seq=20
 dim=64
 batch_size=256
 #num_train_steps=400000
-num_train_steps=1
+num_train_steps=10
 
 prop_sliding_window=0.5
 mask_prob=1.0
-dupe_factor=10
+dupe_factor=1
 pool_size=10
 
 signature="-mp${mask_prob}-sw${prop_sliding_window}-mlp${masked_lm_prob}-df${dupe_factor}-mpps${max_predictions_per_seq}-msl${max_seq_length}"

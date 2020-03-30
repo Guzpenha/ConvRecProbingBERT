@@ -12,8 +12,7 @@ def set_template(args):
         args.split = 'leave_one_out'
 
         args.dataloader_code = 'bert'
-        batch = 128
-        # batch=50
+        batch = 10
         args.train_batch_size = batch
         args.val_batch_size = batch
         args.test_batch_size = batch
@@ -44,7 +43,7 @@ def set_template(args):
         args.bert_dropout = 0.1
         args.bert_hidden_units = 256
         args.bert_mask_prob = 0.15
-        args.bert_max_len = 200
+        args.bert_max_len = 100
         args.bert_num_blocks = 2
         args.bert_num_heads = 4
     

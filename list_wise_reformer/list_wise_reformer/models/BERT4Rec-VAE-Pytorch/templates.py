@@ -26,8 +26,8 @@ def set_template(args):
         args.test_negative_sampling_seed = 98765
 
         args.trainer_code = 'bert'
-        args.device = 'cpu'
-        args.num_gpu = 0
+        args.device = 'cuda'
+        args.num_gpu = 1
         args.device_idx = '0'
         args.optimizer = 'Adam'
         args.lr = 0.001

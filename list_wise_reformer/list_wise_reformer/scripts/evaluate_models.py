@@ -8,13 +8,6 @@ import argparse
 import logging
 import json
 
-def confidence_interval(data, confidence=0.95):
-    a = 1.0 * np.array(data)
-    n = len(a)
-    m, se = np.mean(a), scipy.stats.sem(a)
-    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
-    return h
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -93,13 +86,20 @@ def main():
                                               index=False, sep="\t")
     #run statistical tests between maximum runs
     arg_max = metrics_results. \
-        sort_values(metric, ascending=False).\
-        drop_duplicates(['model']).\
+        sort_values(metric, ascending=False). \
+        drop_duplicates(['model']). \
         reset_index()
 
     arg_max = arg_max.sort_values(metric, ascending=True)
 
     per_dataset_df = []
+    # In the end the tests we want is Ours_(rec+dialogue+search) vs all baselines,
+    # which is equal to N_metrics * N_baselines * N_tasks tests. When displaying the table,
+    # only the last model can have the superscripts with statistical significance.
+    n_tests = len(METRICS) * (len(arg_max["model"].unique()) -1) * \
+              len(arg_max["dataset"].unique())
+    logging.info("n_tests : {}".format(n_tests))
+
     for dataset in arg_max["dataset"].unique():
         seen_models = []
         filtered_df = arg_max[arg_max["dataset"] == dataset]
@@ -112,11 +112,11 @@ def main():
                     baseline_values = filtered_df.loc[model_idx, metric+"_per_query"]
                     current_model_values = filtered_df.loc[idx, metric+"_per_query"]
                     statistic, pvalue = scipy.stats.ttest_rel(baseline_values,
-                                                   current_model_values)
+                                                              current_model_values)
                     filtered_df.loc[idx, metric+"_pvalues"] = filtered_df.loc[idx, metric+"_pvalues"] + \
                                                               "," + str(pvalue)
-                    if pvalue < 0.05:
-                        filtered_df.loc[idx, metric+"_statistical_tests"] =  \
+                    if pvalue <= (0.05/n_tests):
+                        filtered_df.loc[idx, metric+"_statistical_tests"] = \
                             filtered_df.loc[idx, metric+"_statistical_tests"]+ \
                             str(model_idx)
             seen_models.append(idx)
@@ -124,6 +124,6 @@ def main():
     arg_max = pd.concat(per_dataset_df)
     arg_max = arg_max[[c for c in arg_max.columns if "per_query" not in c]]
     arg_max.to_csv(args.output_folder+args.model_type+"_max_results.csv",
-                                              index=False, sep="\t")
+                   index=False, sep="\t")
 if __name__ == "__main__":
     main()

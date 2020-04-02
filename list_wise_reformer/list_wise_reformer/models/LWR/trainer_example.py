@@ -22,11 +22,13 @@ args = parser.parse_args()
 
 args.num_epochs=1
 args.validate_epochs=1
-args.num_validation_instances = 0
+args.num_validation_instances = -1
 args.num_candidate_docs_train = 2
 args.train_batch_size = 2
 args.val_batch_size = 1
 args.lr = 5e-5
+args.sacred_ex = None
+
 # args.loss="cross-entropy"
 args.loss="ApproxNDCG"
 
@@ -54,7 +56,7 @@ model = ListWiseReformer(
     dim = 1048,
     depth = 12,
     max_seq_len = MAX_SEQ_LEN,
-    num_candidate_docs=2)
+    num_doc_predictions=args.num_candidate_docs_train)
 
 dataloader = LWRFineTuningDataLoader(args=args, train_df=train,
                                      val_df=valid, test_df=test,

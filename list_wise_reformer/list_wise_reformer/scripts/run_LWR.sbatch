@@ -2,10 +2,10 @@
 
 #SBATCH --partition=general
 #SBATCH --qos=short
-#SBATCH --time=00:10:00
+#SBATCH --time=02:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 #SBATCH --mem-per-cpu=10000
 #SBATCH --mail-type=END
 
@@ -21,5 +21,12 @@ cd ../models/LWR/
 
 for SEED in 42
 do
-srun python trainer_example.py
+srun python main.py \
+    --seed $SEED \
+    --num_epochs 200 \
+    --data_folder $REPO_DIR/data/recommendation/ \
+    --output_predictions_folder $REPO_DIR/data/output_data/lwr \
+    --task $TASK \
+    --validate_epochs 1 \
+    --sample_data 10000
 done

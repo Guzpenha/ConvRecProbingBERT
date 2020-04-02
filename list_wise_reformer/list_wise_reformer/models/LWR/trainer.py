@@ -25,6 +25,7 @@ class LWRTrainer():
             self.model = nn.DataParallel(self.model)
 
         self.metrics = ['recip_rank', 'ndcg_cut_10']
+        self.best_ndcg=0
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
@@ -67,13 +68,19 @@ class LWRTrainer():
                 self.optimizer.step()
                 self.optimizer.zero_grad()
 
-                tqdm_dataloader.\
-                    set_description('Epoch {}, train loss {:.3f}, '
-                                    'val nDCG@10 {:.3f}'.format(epoch + 1, loss, ndcg))
                 total_steps+=1
+
             if self.validate_epochs > 0 and total_steps % self.validate_epochs == 0:
-                res = self.validate(loader = self.val_loader)
+                res, _ = self.validate(loader = self.val_loader)
                 ndcg = res['ndcg_cut_10']
+                if ndcg>self.best_ndcg:
+                    self.best_ndcg = ndcg
+                if self.args.sacred_ex != None:
+                    self.args.sacred_ex.log_scalar('eval_ndcg_10', ndcg, epoch+1)
+
+            tqdm_dataloader. \
+                set_description('Epoch {}, train loss {:.3f}, '
+                                'val nDCG@10 {:.3f}'.format(epoch + 1, loss, ndcg))
 
     def validate(self, loader):
         self.model.eval()
@@ -89,16 +96,17 @@ class LWRTrainer():
                     all_logits.append(p.tolist())
                 for l in labels:
                     all_labels.append(l.tolist())
-            if self.num_validation_instances!=0 and idx > self.num_validation_instances:
+            if self.num_validation_instances!=-1 and idx > self.num_validation_instances:
                 break
-        return self.evaluate(all_logits, all_labels)
+        return self.evaluate(all_logits, all_labels), all_logits
 
     def test(self):
         logging.info("Starting evaluation on test.")
         self.num_validation_instances = 0
-        res = self.validate(self.test_loader)
+        res, logits = self.validate(self.test_loader)
         for metric, v in res.items():
             logging.info("Test {} : {:4f}".format(metric, v))
+        return logits
 
     def evaluate(self, preds, labels):
         qrels = {}

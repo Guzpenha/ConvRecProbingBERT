@@ -27,7 +27,8 @@ args.num_candidate_docs_train = 2
 args.train_batch_size = 2
 args.val_batch_size = 1
 args.lr = 5e-5
-args.loss="cross-entropy"
+# args.loss="cross-entropy"
+args.loss="ApproxNDCG"
 
 MAX_SEQ_LEN = 1024
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased')

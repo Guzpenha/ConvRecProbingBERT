@@ -1,4 +1,6 @@
 from list_wise_reformer.eval.evaluation import evaluate_models
+from list_wise_reformer.models.LWR.loss import custom_losses
+from IPython import embed
 from tqdm import tqdm
 
 import logging
@@ -31,6 +33,9 @@ class LWRTrainer():
 
         if self.args.loss == "cross-entropy":
             self.loss_function = nn.CrossEntropyLoss()
+        elif self.args.loss in custom_losses:
+            self.loss_function = custom_losses[self.args.loss]
+
         self.max_grad_norm = 0.5
 
     def fit(self):
@@ -51,6 +56,8 @@ class LWRTrainer():
                     _, max_indexes = torch.topk(logits, 1)
                     max_indexes = max_indexes.flatten()
                     loss = self.loss_function(logits, max_indexes)
+                elif self.args.loss in custom_losses:
+                    loss = self.loss_function(logits, labels.float())
                 else:
                     raise Exception("Unsupported loss function")
                 loss.backward()

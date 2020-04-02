@@ -8,6 +8,7 @@ from sacred.observers import FileStorageObserver
 from sacred import Experiment
 from IPython import embed
 
+import torch
 import pandas as pd
 import argparse
 import logging
@@ -27,11 +28,15 @@ def run_experiment(args):
     tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
     tokenizer.max_len = args.max_seq_len
 
+
     model = ListWiseReformer(num_tokens= tokenizer.vocab_size,
                             dim = args.hidden_dim, depth = args.depth,
                             max_seq_len = args.max_seq_len,
                             num_doc_predictions=(len(train.columns)-1),
                             seed=args.seed)
+    if args.load_model != "":
+        logging.info("Loading weights from {}".format(args.load_model))
+        model.load_state_dict(torch.load(args.load_model))
 
     dataloader = LWRFineTuningDataLoader(args=args, train_df=train,
                                          val_df=valid, test_df=valid,
@@ -50,6 +55,10 @@ def run_experiment(args):
     preds_df = pd.DataFrame(preds, columns=["prediction_"+str(i) for i in range(len(preds[0]))])
     preds_df.to_csv(args.output_dir+"/"+args.run_id+"/predictions.csv", index=False)
 
+    #Saving model to a file
+    if args.save_model:
+        torch.save(model.state_dict(), args.output_dir+"/"+args.run_id+"/model")
+
     return trainer.best_ndcg
 
 def main():
@@ -62,6 +71,10 @@ def main():
                         help="the folder containing data")
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="the folder to output predictions")
+    parser.add_argument("--load_model", default="", type=str, required=False,
+                        help="Path with model weights to load before training.")
+    parser.add_argument("--save_model", default=False, type=str, required=False,
+                        help="Save trained model at the end of training.")
 
     #Training procedure
     parser.add_argument("--seed", default=42, type=str, required=True,

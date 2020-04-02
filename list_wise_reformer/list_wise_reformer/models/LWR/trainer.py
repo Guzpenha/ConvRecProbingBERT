@@ -20,9 +20,9 @@ class LWRTrainer():
         logging.info("Device {}".format(self.device))
         logging.info("Num GPU {}".format(self.num_gpu))
 
-        self.model = model.to(self.device)
         if self.num_gpu > 1:
             self.model = nn.DataParallel(self.model)
+        self.model = model.to(self.device)
 
         self.metrics = ['recip_rank', 'ndcg_cut_10']
         self.best_ndcg=0

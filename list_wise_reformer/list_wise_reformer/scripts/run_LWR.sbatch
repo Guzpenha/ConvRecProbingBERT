@@ -25,8 +25,12 @@ srun python main.py \
     --seed $SEED \
     --num_epochs 200 \
     --data_folder $REPO_DIR/data/recommendation/ \
-    --output_predictions_folder $REPO_DIR/data/output_data/lwr \
+    --output_dir $REPO_DIR/data/output_data/lwr \
     --task $TASK \
     --validate_epochs 1 \
-    --sample_data 10000
+    --sample_data 10000 \
+    --max_seq_len 2048 \
+    --train_batch_size 10 \
+    --val_batch_size 10 \
+    --save_model False
 done

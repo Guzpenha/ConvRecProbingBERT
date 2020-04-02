@@ -33,7 +33,7 @@ music_bert4rec = "${DIR}bert4rec_torch/15/,${DIR}bert4rec_torch/16/,${DIR}bert4r
 GR_random = "${DIR}random/22/,${DIR}random/23/,${DIR}random/24/,${DIR}random/25/,${DIR}random/26/,"
 GR_pop = "${DIR}popularity/7/,"
 GR_bprmf = "${DIR}bprmf/25/,${DIR}bprmf/26/,${DIR}bprmf/27/,${DIR}bprmf/28/,${DIR}bprmf/29/,"
-GR_sasrec = "${DIR}sasrec/35/,${DIR}sasrec/36/,${DIR}sasrec/37/,${DIR}sasrec/38/,${DIR}sasrec/39/,"
+GR_sasrec = "${DIR}sasrec/31/,${DIR}sasrec/32/,${DIR}sasrec/33/,${DIR}sasrec/34/,${DIR}sasrec/35/,"
 GR_bert4rec = "${DIR}bert4rec_torch/20/,${DIR}bert4rec_torch/21/,${DIR}bert4rec_torch/22/,${DIR}bert4rec_torch/23/,${DIR}bert4rec_torch/24/"
 
 

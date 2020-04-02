@@ -15,7 +15,7 @@ module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
-TASK=ml25m
+#TASK=ml25m
 
 # Creating TASK dataset in bert4rec pytorch format (run this only the first time)
 srun python create_BERT4rec_data_pytorch.py  \
@@ -25,12 +25,12 @@ srun python create_BERT4rec_data_pytorch.py  \
 
 cd ../models/BERT4Rec-VAE-Pytorch/
 
-x=0
+#x=0
 for SEED in 42
 do
 python main.py \
     --model_init_seed $SEED \
-    --num_epochs 10 \
+    --num_epochs 200 \
     --output_predictions_folder $REPO_DIR/data/output_data/bert4rec_torch/${x} \
     --task $TASK \
     --template train_bert

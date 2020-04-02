@@ -24,9 +24,6 @@ srun python make_seq_rec_data.py \
   --item_names_path ./recommendation/books_names.csv \
   --output_path ./recommendation/gr
 
-srun python filter_gr_no_queries.py \
-  --path ./recommendation/gr/
-
 srun python make_seq_rec_data.py \
   --task ml25m \
   --ratings_path ./recommendation/ml25m_ratings.csv \

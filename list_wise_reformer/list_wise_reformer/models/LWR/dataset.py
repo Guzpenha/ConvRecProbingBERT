@@ -1,11 +1,9 @@
-from transformers import BertTokenizer
-from IPython import embed
-from abc import *
-
 import torch
 import torch.utils.data as data
 import logging
 import random
+
+from abc import *
 
 #Inspired by BERTREC-VAE-Pytorch
 class AbstractDataloader(metaclass=ABCMeta):

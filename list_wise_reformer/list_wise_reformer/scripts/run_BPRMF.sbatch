@@ -2,11 +2,11 @@
 
 #SBATCH --partition=general
 #SBATCH --qos=long
-#SBATCH --time=30:00:00
+#SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem-per-cpu=6000
+#SBATCH --mem-per-cpu=20000
 #SBATCH --mail-type=END
 
 module use /opt/insy/modulefiles

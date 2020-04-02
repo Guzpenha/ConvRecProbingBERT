@@ -13,6 +13,7 @@ MAX_LEN=200
 BATCH_SIZE=128
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 #TASK=ml25m
+mkdir $REPO_DIR/list_wise_reformer/list_wise_reformer/models/SASRec/train_${TASK}_default
 
 module use /opt/insy/modulefiles
 module load cuda/10.0 cudnn/10.0-7.4.2.24

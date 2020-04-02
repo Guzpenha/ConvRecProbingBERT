@@ -45,7 +45,7 @@ def generate_seq_data_amazon_music(path, path_item_names,
     valid = []
     test = []
 
-    print("Sampling movies for each user")
+    print("Sampling albums for each user")
     for user in tqdm([u for u in rated_albums.keys()], desc="User"):
         user_rated_albums = rated_albums[user]
         if len(user_rated_albums) > 3 :

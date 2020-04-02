@@ -30,3 +30,4 @@ model = ListWiseReformer(
 
 x = torch.randint(0, tokenizer.vocab_size, (2, MAX_SEQ_LEN)).long() #B X SEQ_LEN
 y = model(x) # B X NUM_DOCS
+print(y.shape)

@@ -20,10 +20,9 @@ class LWRTrainer():
         logging.info("Device {}".format(self.device))
         logging.info("Num GPU {}".format(self.num_gpu))
 
-        self.model = model
+        self.model = model.to(self.device)
         if self.num_gpu > 1:
             self.model = nn.DataParallel(self.model)
-        self.model = self.model.to(self.device)
 
         self.metrics = ['recip_rank', 'ndcg_cut_10']
         self.best_ndcg=0
@@ -48,7 +47,7 @@ class LWRTrainer():
         total_steps=0
         ndcg=0
         for epoch in tqdm_dataloader:
-            for batch in self.train_loader:
+            for batch in tqdm(self.train_loader):
                 batch = [x.to(self.device) for x in batch]
                 input, labels = batch
 

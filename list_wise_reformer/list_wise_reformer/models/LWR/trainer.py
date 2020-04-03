@@ -48,6 +48,7 @@ class LWRTrainer():
         ndcg=0
         for epoch in tqdm_dataloader:
             for batch in tqdm(self.train_loader):
+                self.model.train()
                 batch = [x.to(self.device) for x in batch]
                 input, labels = batch
 

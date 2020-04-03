@@ -1,18 +1,38 @@
-# Recsys'20 Penha
+# Listwise Reformer (LWR)
 
-## Sequential Recommendation task
+## Steps to reproduce paper results
 
-### MovieLens-25m example
+1. Clone this repo
+    git clone REPO
 
-“Lord of the Rings: The Two Towers, The (2002) [ITEM_SEP] Back to the Future Part III (1990) [MOVIE_SEP] Back to the Future Part II (1989) [ITEM_SEP] Gattaca (1997) [..] [MASK]” →  <span style="color:blue"> Pulp Fiction (1994) </span>
+2. Create virtual env, activate it and install requirements.txt
+    python3 -m venv env
+    source env/bin/activate
+    pip install -r requirements.txt
+    cd list_wise_reformer
+    pip install -e .
 
-### Goodreads example
-“God Emperor of Dune (Dune Chronicles, #4) by Frank Herbert [ITEM_SEP] Chapterhouse: Dune (Dune Chronicles #6) by Frank Herbert [ITEM_SEP] Children of Dune (Dune Chronicles #3) by Frank Herbert [ITEM_SEP] Heretics of Dune (Dune Chronicles #5) by Frank Herbert [..] [ITEM_SEP] The Three-Body Problem (Remembrance of Earth’s Past, #1) by Liu Cixin [ITEM_SEP] The Dark Forest (Remembrance of Earth’s Past, #2) by Liu Cixin [MASK]”, → <span style="color:blue"> Death's End (Remembrance of Earth’s Past, #3) by Liu Cixin </span>
+3. Do either :
+    - run ./download_data.sh and ./run_datasets_creation.sh or
+    - download preprocessed data from URL
 
-## Product Search task
-### MovieLens-25m example
-### Goodreads example
+4. Run main.py from LWR
+    TASK=ml25m
+    REPO_DIR=/ssd/home/gustavo/recsys2020penha/
+    python main.py \
+        --seed 42 \
+        --num_epochs 200 \
+        --data_folder $REPO_DIR/data/recommendation/ \
+        --output_dir $REPO_DIR/data/output_data/lwr \
+        --task $TASK \
+        --validate_epochs 1 \
+        --sample_data 1000 \
+        --max_seq_len 2048 \
+        --train_batch_size 10 \
+        --val_batch_size 10 \
+        --save_model False
 
-## Conversation Response Ranking task
-### MovieLens-25m example
-### Goodreads example
+## Simple examples of using LWR
+
+1. model_example.py
+2. trainer_example.py

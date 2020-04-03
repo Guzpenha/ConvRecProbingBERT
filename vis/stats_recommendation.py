@@ -3,7 +3,7 @@ import pandas as pd
 
 def main():
     base_path = "/Users/gustavopenha/personal/recsys20/data/recommendation/"
-    for path in ["music"]: #["ml25m", "gr", "music"]:
+    for path in ["music", "ml25m", "gr"]:
         print(path)
         train, valid, test = pd.read_csv(base_path+path+"/train.csv"), \
                              pd.read_csv(base_path+path+"/valid.csv"), \

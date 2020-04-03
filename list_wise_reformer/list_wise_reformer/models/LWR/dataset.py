@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from abc import *
 
 import torch
@@ -91,7 +92,7 @@ class LWRFineTuningDataset(data.Dataset):
             logging.info("Generating instances with signature {}".format(signature))
             # Input will look like this
             # [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
-            for _, row in self.data.iterrows():
+            for _, row in tqdm(self.data.iterrows()):
                 labels = [1] + ([0] * (self.num_candidate_docs - 1))
                 docs = [row['relevant_doc']] + \
                        [row["non_relevant_" + str(c + 1)]

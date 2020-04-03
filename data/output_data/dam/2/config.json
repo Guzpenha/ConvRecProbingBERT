@@ -1,0 +1,33 @@
+{
+    "args": {
+        "_EOS_": 0, 
+        "attention_type": "dot", 
+        "batch_size": 51, 
+        "data_path": "./data/music/data.pkl", 
+        "drop_attention": null, 
+        "drop_dense": null, 
+        "emb_size": 200, 
+        "final_n_class": 1, 
+        "init_model": null, 
+        "is_layer_norm": true, 
+        "is_mask": true, 
+        "is_positional": false, 
+        "learning_rate": 0.001, 
+        "max_to_keep": 1, 
+        "max_turn_len": 50, 
+        "max_turn_num": 9, 
+        "num_scan_data": 10, 
+        "output_predictions_folder": "/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha/data/output_data/dam/0", 
+        "print_step": 100000, 
+        "rand_seed": 42, 
+        "ranker": "DAM", 
+        "save_path": "./output/music/temp/", 
+        "save_step": 100000, 
+        "seed": "42", 
+        "stack_num": 5, 
+        "task": "music", 
+        "train_steps": 750, 
+        "vocab_size": 22013, 
+        "word_emb_init": null
+    }
+}

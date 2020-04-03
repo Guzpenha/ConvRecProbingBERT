@@ -88,7 +88,7 @@ def main():
     #run statistical tests between maximum runs
     arg_max = metrics_results. \
         sort_values(metric, ascending=False). \
-        drop_duplicates(['model']). \
+        drop_duplicates(['dataset','model']). \
         reset_index()
 
     arg_max = arg_max.sort_values(metric, ascending=True)
@@ -108,7 +108,9 @@ def main():
             filtered_df[metric+"_pvalues"] = ""
             filtered_df[metric+"_statistical_tests"] = ""
         for idx, r in filtered_df.iterrows():
+            model_print_idx=0
             for model_idx in seen_models:
+                model_print_idx+=1
                 for metric in METRICS:
                     baseline_values = filtered_df.loc[model_idx, metric+"_per_query"]
                     current_model_values = filtered_df.loc[idx, metric+"_per_query"]
@@ -119,7 +121,7 @@ def main():
                     if pvalue <= (0.05/n_tests):
                         filtered_df.loc[idx, metric+"_statistical_tests"] = \
                             filtered_df.loc[idx, metric+"_statistical_tests"]+ \
-                            str(model_idx)
+                            str(model_print_idx)
             seen_models.append(idx)
         per_dataset_df.append(filtered_df)
     arg_max = pd.concat(per_dataset_df)

@@ -1,9 +1,11 @@
+from abc import *
+
 import torch
 import torch.utils.data as data
 import logging
 import random
-
-from abc import *
+import os
+import pickle
 
 #Inspired by BERTREC-VAE-Pytorch
 class AbstractDataloader(metaclass=ABCMeta):
@@ -34,9 +36,9 @@ class LWRFineTuningDataLoader(AbstractDataloader):
         return train_loader, val_loader, test_loader
 
     def _get_train_loader(self):
-        dataset = LWRFineTuningDataset(self.train_df,
+        dataset = LWRFineTuningDataset(self.args, self.train_df,
                                     self.args.num_candidate_docs_train,
-                                    self.tokenizer)
+                                    self.tokenizer,'train')
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.actual_train_batch_size,
                                      shuffle=True)
@@ -44,7 +46,8 @@ class LWRFineTuningDataLoader(AbstractDataloader):
 
     def _get_val_loader(self):
         num_docs = len(self.val_df.columns) - 1 #the 'query' column
-        dataset = LWRFineTuningDataset(self.val_df, num_docs, self.tokenizer)
+        dataset = LWRFineTuningDataset(self.args, self.val_df, num_docs,
+                                       self.tokenizer, 'val')
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.args.val_batch_size,
                                      shuffle=False)
@@ -52,18 +55,60 @@ class LWRFineTuningDataLoader(AbstractDataloader):
 
     def _get_test_loader(self):
         num_docs = len(self.test_df.columns) - 1  # the 'query' column
-        dataset = LWRFineTuningDataset(self.test_df, num_docs, self.tokenizer)
+        dataset = LWRFineTuningDataset(self.args, self.test_df, num_docs,
+                                       self.tokenizer, 'test')
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.args.val_batch_size,
                                      shuffle=False)
         return dataloader
 
 class LWRFineTuningDataset(data.Dataset):
-    def __init__(self, data, num_candidate_docs, tokenizer):
+    def __init__(self, args, data, num_candidate_docs, tokenizer, data_partition):
+        random.seed(42)
+
+        self.args = args
         self.data = data
         self.num_candidate_docs = num_candidate_docs
         self.tokenizer = tokenizer
-        random.seed(42)
+        self.data_partition = data_partition
+        self.instances = []
+
+        self._cache_instances()
+
+    def _cache_instances(self):
+        signature = "set_{}_docs_train_{}_seq_max_l_{}_sample_{}".\
+            format(self.data_partition,
+                   self.args.num_candidate_docs_train,
+                   self.args.max_seq_len,
+                   self.args.sample_data)
+        path = self.args.data_folder + self.args.task + signature
+
+        if os.path.exists(path):
+            with open(path, 'rb') as f:
+                logging.info("Loading instances from {}".format(path))
+                self.instances = pickle.load(f)
+        else:
+            logging.info("Generating instances with signature {}".format(signature))
+            # Input will look like this
+            # [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
+            for _, row in self.data.iterrows():
+                labels = [1] + ([0] * (self.num_candidate_docs - 1))
+                docs = [row['relevant_doc']] + \
+                       [row["non_relevant_" + str(c + 1)]
+                        for c in range((self.num_candidate_docs - 1))]
+                docs_and_labels = [_ for _ in zip(docs, labels)]
+                random.shuffle(docs_and_labels)
+
+                input = str(row['query'])
+                for doc, _ in docs_and_labels:
+                    input += " " + self.tokenizer.sep_token + " " + doc
+
+                tokenized_input = self._tokenize_input(input)[0]
+                correct_order_labels = [t[1] for t in docs_and_labels]
+                self.instances.append((torch.LongTensor(tokenized_input),
+                                      torch.LongTensor(correct_order_labels)))
+                with open(path, 'wb') as f:
+                    pickle.dump(self.instances, f)
 
     def _tokenize_input(self, input, pad_to_max_length=True):
         return self.tokenizer.encode(input, add_special_tokens=True,
@@ -72,25 +117,7 @@ class LWRFineTuningDataset(data.Dataset):
                                    return_tensors='pt')
 
     def __len__(self):
-        return self.data.shape[0]
+        return len(self.instances)
 
     def __getitem__(self, index):
-        # Input will look like this
-        # [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
-
-        row = self.data.iloc[[index]]
-        labels = [1] + ([0] * (self.num_candidate_docs-1))
-        docs = [row['relevant_doc'].values[0]] +\
-               [row["non_relevant_"+str(c+1)].values[0]
-                    for c in range((self.num_candidate_docs-1))]
-        docs_and_labels = [ _ for _ in zip(docs, labels)]
-        random.shuffle(docs_and_labels)
-
-        input = str(row['query'].values[0])
-        for doc, _ in docs_and_labels:
-            input+= " " + self.tokenizer.sep_token + " " + doc
-
-        tokenized_input = self._tokenize_input(input)[0]
-        correct_order_labels = [t[1] for t in docs_and_labels]
-
-        return torch.LongTensor(tokenized_input), torch.LongTensor(correct_order_labels)
+        return self.instances[index]

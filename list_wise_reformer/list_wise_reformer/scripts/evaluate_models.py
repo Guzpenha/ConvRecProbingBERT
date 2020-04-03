@@ -47,6 +47,7 @@ def main():
             qrels['model']['labels'] = labels
 
             results = evaluate_models(qrels)
+            logging.info("Task %s" % (config['task']))
             logging.info("Model %s (%s)" % (config[args.model_type], run_folder))
             logging.info("Seed %s" % config['seed'])
 

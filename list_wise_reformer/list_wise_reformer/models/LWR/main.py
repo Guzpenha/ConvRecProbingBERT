@@ -33,7 +33,7 @@ def run_experiment(args):
                             dim = args.hidden_dim, depth = args.depth,
                             max_seq_len = args.max_seq_len,
                             num_doc_predictions=(len(train.columns)-1),
-                            seed=args.seed)
+                            seed=args.seed, heads=args.num_heads)
     if args.load_model != "":
         logging.info("Loading weights from {}".format(args.load_model))
         model.load_state_dict(torch.load(args.load_model))
@@ -95,13 +95,15 @@ def main():
                          help="Amount of data to sample for training and eval. If no sampling required use -1.")
 
     #Model hyperparameters
+    parser.add_argument("--num_heads", default=2, type=int, required=False,
+                        help="Number of attention heads.")
     parser.add_argument("--lr", default=5e-5, type=float, required=False,
                         help="Learning rate.")
     parser.add_argument("--max_seq_len", default=1024, type=int, required=False,
                         help="Maximum sequence length for the inputs.")
-    parser.add_argument("--hidden_dim", default=1048, type=int, required=False,
+    parser.add_argument("--hidden_dim", default=256, type=int, required=False,
                         help="Hidden dimension size.")
-    parser.add_argument("--depth", default=12, type=int, required=False,
+    parser.add_argument("--depth", default=2, type=int, required=False,
                         help="Depth of reformer.")
     parser.add_argument("--loss", default="cross-entropy", type=str, required=False,
                         help="Loss function to use [cross-entropy, "+",".join(custom_losses.keys())+"].")

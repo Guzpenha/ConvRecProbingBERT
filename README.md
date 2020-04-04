@@ -25,11 +25,11 @@
         --data_folder $REPO_DIR/data/recommendation/ \
         --output_dir $REPO_DIR/data/output_data/lwr \
         --task $TASK \
-        --validate_epochs 1 \
+        --validate_epochs 10 \
         --sample_data 1000 \
         --max_seq_len 2048 \
-        --train_batch_size 10 \
-        --val_batch_size 10 \
+        --train_batch_size 60 \
+        --val_batch_size 60 \
         --save_model False
 
 ## Simple examples of using LWR

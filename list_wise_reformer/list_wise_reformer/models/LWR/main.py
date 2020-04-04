@@ -81,6 +81,8 @@ def main():
                         help="random seed")
     parser.add_argument("--num_epochs", default=100, type=int, required=False,
                         help="Number of epochs for training.")
+    parser.add_argument("--max_gpu", default=-1, type=int, required=False,
+                        help="max gpu used")
     parser.add_argument("--validate_epochs", default=2, type=int, required=False,
                         help="Run validation every <validate_epochs> epochs.")
     parser.add_argument("--num_validation_instances", default=-1, type=int, required=False,

@@ -1,3 +1,4 @@
+from IPython import embed
 from tqdm import tqdm
 from abc import *
 
@@ -17,6 +18,8 @@ class AbstractDataloader(metaclass=ABCMeta):
         self.test_df = test_df
         self.tokenizer = tokenizer
         self.num_gpu = torch.cuda.device_count()
+        if args.max_gpu != -1:
+            self.num_gpu = args.max_gpu
         self.actual_train_batch_size = self.args.train_batch_size \
                                        * max(1, self.num_gpu)
         logging.info("Train instances per batch {}".
@@ -77,9 +80,9 @@ class LWRFineTuningDataset(data.Dataset):
         self._cache_instances()
 
     def _cache_instances(self):
-        signature = "set_{}_docs_train_{}_seq_max_l_{}_sample_{}".\
+        signature = "set_{}_n_cand_docs_{}_seq_max_l_{}_sample_{}".\
             format(self.data_partition,
-                   self.args.num_candidate_docs_train,
+                   self.num_candidate_docs,
                    self.args.max_seq_len,
                    self.args.sample_data)
         path = self.args.data_folder + self.args.task + signature
@@ -92,30 +95,31 @@ class LWRFineTuningDataset(data.Dataset):
             logging.info("Generating instances with signature {}".format(signature))
             # Input will look like this
             # [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
-            for _, row in tqdm(self.data.iterrows()):
-                labels = [1] + ([0] * (self.num_candidate_docs - 1))
-                docs = [row['relevant_doc']] + \
-                       [row["non_relevant_" + str(c + 1)]
-                        for c in range((self.num_candidate_docs - 1))]
+            labels = [1] + ([0] * (self.num_candidate_docs - 1))
+            for row in tqdm(self.data.itertuples(index=False)):
+                docs = row[1:self.num_candidate_docs]
+
+                #randomize docs order so that rel is not always on first position
                 docs_and_labels = [_ for _ in zip(docs, labels)]
                 random.shuffle(docs_and_labels)
-
-                input = str(row['query'])
-                for doc, _ in docs_and_labels:
-                    input += " " + self.tokenizer.sep_token + " " + doc
-
-                tokenized_input = self._tokenize_input(input)[0]
                 correct_order_labels = [t[1] for t in docs_and_labels]
-                self.instances.append((torch.LongTensor(tokenized_input),
-                                      torch.LongTensor(correct_order_labels)))
-                with open(path, 'wb') as f:
-                    pickle.dump(self.instances, f)
 
-    def _tokenize_input(self, input, pad_to_max_length=True):
-        return self.tokenizer.encode(input, add_special_tokens=True,
-                                   max_length=self.tokenizer.max_len,
-                                   pad_to_max_length=pad_to_max_length,
-                                   return_tensors='pt')
+                q_str = str(row[0])
+                doc_str = " " + self.tokenizer.sep_token + " ". \
+                    join([t[0] for t in docs_and_labels])
+
+                tokenized_input = self.tokenizer.encode_plus(q_str, doc_str,
+                                                    add_special_tokens=True,
+                                                    max_length=self.tokenizer.max_len)["input_ids"]
+
+                padding_length = self.tokenizer.max_len - len(tokenized_input)
+                tokenized_input = tokenized_input + ([self.tokenizer.pad_token_id] * padding_length)
+
+                self.instances.append((torch.LongTensor(tokenized_input),
+                                       torch.LongTensor(correct_order_labels)))
+
+            with open(path, 'wb') as f:
+                pickle.dump(self.instances, f)
 
     def __len__(self):
         return len(self.instances)

@@ -22,7 +22,11 @@ class LWRTrainer():
 
         self.model = model.to(self.device)
         if self.num_gpu > 1:
-            self.model = nn.DataParallel(self.model)
+            devices = [v for v in range(self.num_gpu)]
+            if self.args.max_gpu !=-1:
+                devices = devices[0:self.args.max_gpu]
+                logging.info("Using max of {} GPU(s).".format(self.args.max_gpu))
+            self.model = nn.DataParallel(self.model, device_ids=devices)
 
         self.metrics = ['recip_rank', 'ndcg_cut_10']
         self.best_ndcg=0

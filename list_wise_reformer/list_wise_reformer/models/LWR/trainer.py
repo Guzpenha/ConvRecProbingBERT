@@ -51,6 +51,7 @@ class LWRTrainer():
         val_ndcg=0
         train_ndcg=0
         for epoch in tqdm_dataloader:
+            avg_train_ndcg=0
             for batch_count, batch in enumerate(self.train_loader):
                 self.model.train()
                 batch = [x.to(self.device) for x in batch]
@@ -76,6 +77,7 @@ class LWRTrainer():
                 # ndcg for the current batch
                 train_ndcg = self.evaluate(logits.detach().cpu().numpy(),
                                            labels.detach().cpu().numpy())['ndcg_cut_10']
+                avg_train_ndcg+=train_ndcg
                 tqdm_dataloader. \
                     set_description('Epoch {} batch {}, train batch nDCG@10 {:.3f}, '
                                     'val nDCG@10 {:.3f}'.format(epoch + 1, batch_count+1,
@@ -88,7 +90,7 @@ class LWRTrainer():
                     self.best_ndcg = val_ndcg
                 if self.args.sacred_ex != None:
                     self.args.sacred_ex.log_scalar('eval_ndcg_10', val_ndcg, epoch+1)
-                    self.args.sacred_ex.log_scalar('train_ndcg_10', train_ndcg, epoch + 1)
+                    self.args.sacred_ex.log_scalar('train_ndcg_10', avg_train_ndcg/batch_count, epoch + 1)
 
             tqdm_dataloader. \
                 set_description('Epoch {} batch {}, train batch nDCG@10 {:.3f}, '

@@ -95,10 +95,9 @@ class LWRFineTuningDataset(data.Dataset):
             logging.info("Generating instances with signature {}".format(signature))
             # Input will look like this
             # [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
-            labels = [1] + ([0] * (self.num_candidate_docs - 1))
+            labels = [1] + ([0] * (self.num_candidate_docs-1))
             for row in tqdm(self.data.itertuples(index=False)):
-                docs = row[1:self.num_candidate_docs]
-
+                docs = row[1:(self.num_candidate_docs)+1]
                 #randomize docs order so that rel is not always on first position
                 docs_and_labels = [_ for _ in zip(docs, labels)]
                 random.shuffle(docs_and_labels)

@@ -47,11 +47,11 @@ class LWRTrainer():
         logging.info("Total steps per epoch : {}".format(len(self.train_loader)))
         logging.info("Validating every {} epoch.".format(self.validate_epochs))
         tqdm_dataloader = tqdm(range(self.num_epochs))
-        tqdm_dataloader.set_description('Epoch 0, train loss _, val nDCG@10 _')
-        total_steps=0
-        ndcg=0
+        tqdm_dataloader.set_description('Epoch 0, batch 0, train batch nDCG@10 _, val nDCG@10 _')
+        val_ndcg=0
+        train_ndcg=0
         for epoch in tqdm_dataloader:
-            for batch in tqdm(self.train_loader):
+            for batch_count, batch in enumerate(self.train_loader):
                 self.model.train()
                 batch = [x.to(self.device) for x in batch]
                 input, labels = batch
@@ -69,23 +69,31 @@ class LWRTrainer():
                 loss.backward()
 
                 nn.utils.clip_grad_norm_(self.model.parameters(),
-                                               self.max_grad_norm)
+                                         self.max_grad_norm)
                 self.optimizer.step()
                 self.optimizer.zero_grad()
 
-                total_steps+=1
+                # ndcg for the current batch
+                train_ndcg = self.evaluate(logits.detach().cpu().numpy(),
+                                           labels.detach().cpu().numpy())['ndcg_cut_10']
+                tqdm_dataloader. \
+                    set_description('Epoch {} batch {}, train batch nDCG@10 {:.3f}, '
+                                    'val nDCG@10 {:.3f}'.format(epoch + 1, batch_count+1,
+                                                                train_ndcg, val_ndcg))
 
-            if self.validate_epochs > 0 and total_steps % self.validate_epochs == 0:
+            if self.validate_epochs > 0 and epoch % self.validate_epochs == 0:
                 res, _ = self.validate(loader = self.val_loader)
-                ndcg = res['ndcg_cut_10']
-                if ndcg>self.best_ndcg:
-                    self.best_ndcg = ndcg
+                val_ndcg = res['ndcg_cut_10']
+                if val_ndcg>self.best_ndcg:
+                    self.best_ndcg = val_ndcg
                 if self.args.sacred_ex != None:
-                    self.args.sacred_ex.log_scalar('eval_ndcg_10', ndcg, epoch+1)
+                    self.args.sacred_ex.log_scalar('eval_ndcg_10', val_ndcg, epoch+1)
+                    self.args.sacred_ex.log_scalar('train_ndcg_10', train_ndcg, epoch + 1)
 
             tqdm_dataloader. \
-                set_description('Epoch {}, train loss {:.3f}, '
-                                'val nDCG@10 {:.3f}'.format(epoch + 1, loss, ndcg))
+                set_description('Epoch {} batch {}, train batch nDCG@10 {:.3f}, '
+                                'val nDCG@10 {:.3f}'.format(epoch + 1, batch_count+1,
+                                                            train_ndcg, val_ndcg))
 
     def validate(self, loader):
         self.model.eval()

@@ -306,7 +306,7 @@ def toItemIDFormat(df, item_map, tokenizer):
                 non_rel_items.append(item_map[item])
 
         new_df.append([query, rel_doc] + non_rel_items)
-    return pd.DataFrame(new_df, columns=df.columns)
+    return pd.DataFrame(new_df, columns=df.columns), tokenizer
 
 def toMSNFormat(train_sessions_df, valid_session_df, number_ns_train=1):
     tknzr = TweetTokenizer(strip_handles=True, reduce_len=True)

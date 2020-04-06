@@ -34,6 +34,7 @@ class AbstractDataloader(metaclass=ABCMeta):
 class LWRFineTuningDataLoader(AbstractDataloader):
     def __init__(self, args, train_df, val_df, test_df, tokenizer):
         super().__init__(args, train_df, val_df, test_df, tokenizer)
+        self.item_map = {}
 
     def get_pytorch_dataloaders(self):
         train_loader = self._get_train_loader()
@@ -44,7 +45,7 @@ class LWRFineTuningDataLoader(AbstractDataloader):
     def _get_train_loader(self):
         dataset = LWRFineTuningDataset(self.args, self.train_df,
                                     self.args.num_candidate_docs_train,
-                                    self.tokenizer,'train')
+                                    self.tokenizer,'train', self.item_map)
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.actual_train_batch_size,
                                      shuffle=True)
@@ -53,7 +54,7 @@ class LWRFineTuningDataLoader(AbstractDataloader):
     def _get_val_loader(self):
         num_docs = len(self.val_df.columns) - 1 #the 'query' column
         dataset = LWRFineTuningDataset(self.args, self.val_df, num_docs,
-                                       self.tokenizer, 'val')
+                                       self.tokenizer, 'val', self.item_map)
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.args.val_batch_size,
                                      shuffle=False)
@@ -62,14 +63,15 @@ class LWRFineTuningDataLoader(AbstractDataloader):
     def _get_test_loader(self):
         num_docs = len(self.test_df.columns) - 1  # the 'query' column
         dataset = LWRFineTuningDataset(self.args, self.test_df, num_docs,
-                                       self.tokenizer, 'test')
+                                       self.tokenizer, 'test', self.item_map)
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.args.val_batch_size,
                                      shuffle=False)
+        self.tokenizer = dataset.tokenizer
         return dataloader
 
 class LWRFineTuningDataset(data.Dataset):
-    def __init__(self, args, data, num_candidate_docs, tokenizer, data_partition):
+    def __init__(self, args, data, num_candidate_docs, tokenizer, data_partition, item_map):
         random.seed(42)
 
         self.args = args
@@ -78,7 +80,7 @@ class LWRFineTuningDataset(data.Dataset):
         self.tokenizer = tokenizer
         self.data_partition = data_partition
         self.instances = []
-        self.item_map = {}
+        self.item_map = item_map
 
         self._cache_instances()
 
@@ -100,7 +102,7 @@ class LWRFineTuningDataset(data.Dataset):
         else:
             logging.info("Generating instances with signature {}".format(signature))
             if self.args.input_representation == 'item_ids':
-                self.data = toItemIDFormat(self.data, self.item_map, self.tokenizer)
+                self.data, self.tokenizer = toItemIDFormat(self.data, self.item_map, self.tokenizer)
 
             labels = [1] + ([0] * (self.num_candidate_docs-1))
             for row in tqdm(self.data.itertuples(index=False)):

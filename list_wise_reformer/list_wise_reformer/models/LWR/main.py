@@ -29,14 +29,12 @@ def run_experiment(args):
     tokenizer.add_tokens(['[UTTERANCE_SEP]', '[ITEM_SEP]'])
     tokenizer.max_len = args.max_seq_len
 
-
-
     dataloader = LWRFineTuningDataLoader(args=args, train_df=train,
                                          val_df=valid, test_df=valid,
                                          tokenizer=tokenizer)
     train_loader, val_loader, test_loader = dataloader.get_pytorch_dataloaders()
 
-    model = ListWiseReformer(num_tokens= tokenizer.vocab_size,
+    model = ListWiseReformer(num_tokens=len(dataloader.tokenizer),
                             dim = args.hidden_dim, depth = args.depth,
                             max_seq_len = args.max_seq_len,
                             num_doc_predictions=args.num_candidate_docs_train,

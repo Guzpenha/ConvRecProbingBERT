@@ -106,7 +106,7 @@ class LWRFineTuningDataset(data.Dataset):
                 self.data, self.tokenizer = toItemIDFormat(self.data, self.item_map, self.tokenizer)
 
             labels = [1] + ([0] * (self.num_candidate_docs-1))
-            for row in tqdm(self.data.itertuples(index=False)):
+            for idx, row in enumerate(tqdm(self.data.itertuples(index=False))):
                 docs = row[1:(self.num_candidate_docs)+1]
 
                 #randomize docs order so that rel is not always on first position
@@ -139,6 +139,13 @@ class LWRFineTuningDataset(data.Dataset):
 
                 self.instances.append((torch.LongTensor(tokenized_input),
                                        torch.LongTensor(correct_order_labels)))
+                if idx < 5:
+                    logging.info("Instance {} query string\n\n{}\n".format(idx, q_str))
+                    logging.info("Instance {} doc string ({} candidates)\n\n{}\n".
+                                 format(idx,self.num_candidate_docs, doc_str))
+                    logging.info("Instance {} tokenized input \n\n{}\n".format(idx, tokenized_input))
+                    logging.info("Instance {} reconstructed input \n\n{}\n".format(idx,
+                        self.tokenizer.convert_ids_to_tokens(tokenized_input)))
 
             with open(path, 'wb') as f:
                 pickle.dump(self.instances, f)

@@ -109,7 +109,7 @@ def main():
                         help="Hidden dimension size.")
     parser.add_argument("--depth", default=2, type=int, required=False,
                         help="Depth of reformer.")
-    parser.add_argument("--loss", default="cross-entropy", type=str, required=False,
+    parser.add_argument("--loss", default="PointwiseRMSE", type=str, required=False,
                         help="Loss function to use [cross-entropy, "+",".join(custom_losses.keys())+"].")
 
     args = parser.parse_args()

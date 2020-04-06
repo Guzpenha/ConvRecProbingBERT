@@ -98,7 +98,8 @@ class LWRFineTuningDataset(data.Dataset):
             with open(path, 'rb') as f:
                 logging.info("Loading instances from {}".format(path))
                 self.instances = pickle.load(f)
-            self.tokenizer = BertTokenizer.from_pretrained(path_tokenizer)
+            if self.args.input_representation == 'item_ids':
+                self.tokenizer = BertTokenizer.from_pretrained(path_tokenizer)
         else:
             logging.info("Generating instances with signature {}".format(signature))
             if self.args.input_representation == 'item_ids':

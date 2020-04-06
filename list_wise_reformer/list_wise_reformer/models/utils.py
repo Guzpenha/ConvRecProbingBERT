@@ -275,6 +275,39 @@ def toDAMFormat(train_sessions_df, valid_session_df, number_ns_train=1):
 
     return (train_dict, valid_dict, valid_dict), word_to_id
 
+def toItemIDFormat(df, item_map, tokenizer):
+    i_count = len(item_map)
+
+    new_df = []
+    for _, r in tqdm(df.iterrows()):
+        q_items = []
+        for item in r['query'].split(" [SEP] "):
+            if item not in item_map:
+                item_map[item] = "item"+str(i_count)
+                tokenizer.add_tokens(["item"+str(i_count)])
+                i_count+=1
+            q_items.append(str(item_map[item]))
+        query=" [SEP] ".join(q_items)
+
+        if r['relevant_doc'] not in item_map:
+            item_map[r['relevant_doc']] = "item"+str(i_count)
+            tokenizer.add_tokens(["item"+str(i_count)])
+            i_count+=1
+        rel_doc = item_map[r['relevant_doc']]
+
+        non_rel_items = []
+        for c in df.columns:
+            if "non_relevant_" in c:
+                item = r[c]
+                if item not in item_map:
+                    item_map[item] = "item"+str(i_count)
+                    tokenizer.add_tokens(["item"+str(i_count)])
+                    i_count += 1
+                non_rel_items.append(item_map[item])
+
+        new_df.append([query, rel_doc] + non_rel_items)
+    return pd.DataFrame(new_df, columns=df.columns)
+
 def toMSNFormat(train_sessions_df, valid_session_df, number_ns_train=1):
     tknzr = TweetTokenizer(strip_handles=True, reduce_len=True)
 

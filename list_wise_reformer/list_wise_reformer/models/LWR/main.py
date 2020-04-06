@@ -26,23 +26,25 @@ def run_experiment(args):
         valid = valid[0:args.sample_data]
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+    tokenizer.add_tokens(['[UTTERANCE_SEP]', '[ITEM_SEP]'])
     tokenizer.max_len = args.max_seq_len
 
+
+
+    dataloader = LWRFineTuningDataLoader(args=args, train_df=train,
+                                         val_df=valid, test_df=valid,
+                                         tokenizer=tokenizer)
+    train_loader, val_loader, test_loader = dataloader.get_pytorch_dataloaders()
 
     model = ListWiseReformer(num_tokens= tokenizer.vocab_size,
                             dim = args.hidden_dim, depth = args.depth,
                             max_seq_len = args.max_seq_len,
-                            num_doc_predictions=(len(train.columns)-1),
+                            num_doc_predictions=args.num_candidate_docs_train,
                             seed=args.seed, heads=args.num_heads)
     if args.load_model != "":
         logging.info("Loading weights from {}".format(args.load_model))
         model.load_state_dict(torch.load(args.load_model))
 
-    dataloader = LWRFineTuningDataLoader(args=args, train_df=train,
-                                         val_df=valid, test_df=valid,
-                                         tokenizer=tokenizer)
-
-    train_loader, val_loader, test_loader = dataloader.get_pytorch_dataloaders()
     trainer = LWRTrainer(args, model, train_loader, val_loader, test_loader)
 
     model_name = model.__class__.__name__
@@ -95,6 +97,8 @@ def main():
                         help="Number of documents to use during training")
     parser.add_argument("--sample_data", default=-1, type=int, required=False,
                          help="Amount of data to sample for training and eval. If no sampling required use -1.")
+    parser.add_argument("--input_representation", default="text", type=str, required=False,
+                        help="Represent the input as 'text' or 'item_ids' (available only for rec)")
 
     #Model hyperparameters
     parser.add_argument("--num_heads", default=2, type=int, required=False,

@@ -1,3 +1,5 @@
+from list_wise_reformer.models.utils import toItemIDFormat
+from transformers import BertTokenizer, PreTrainedTokenizer
 from IPython import embed
 from tqdm import tqdm
 from abc import *
@@ -76,40 +78,58 @@ class LWRFineTuningDataset(data.Dataset):
         self.tokenizer = tokenizer
         self.data_partition = data_partition
         self.instances = []
+        self.item_map = {}
 
         self._cache_instances()
 
     def _cache_instances(self):
-        signature = "set_{}_n_cand_docs_{}_seq_max_l_{}_sample_{}".\
+        signature = "set_{}_n_cand_docs_{}_seq_max_l_{}_sample_{}_rep_{}".\
             format(self.data_partition,
                    self.num_candidate_docs,
                    self.args.max_seq_len,
-                   self.args.sample_data)
+                   self.args.sample_data,
+                   self.args.input_representation)
         path = self.args.data_folder + self.args.task + signature
+        path_tokenizer = self.args.data_folder + self.args.task + signature + "_tokenizer"
 
         if os.path.exists(path):
             with open(path, 'rb') as f:
                 logging.info("Loading instances from {}".format(path))
                 self.instances = pickle.load(f)
+            self.tokenizer = BertTokenizer.from_pretrained(path_tokenizer)
         else:
             logging.info("Generating instances with signature {}".format(signature))
-            # Input will look like this
-            # [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
+            if self.args.input_representation == 'item_ids':
+                self.data = toItemIDFormat(self.data, self.item_map, self.tokenizer)
+
             labels = [1] + ([0] * (self.num_candidate_docs-1))
             for row in tqdm(self.data.itertuples(index=False)):
                 docs = row[1:(self.num_candidate_docs)+1]
+
                 #randomize docs order so that rel is not always on first position
                 docs_and_labels = [_ for _ in zip(docs, labels)]
                 random.shuffle(docs_and_labels)
                 correct_order_labels = [t[1] for t in docs_and_labels]
 
-                q_str = str(row[0])
-                doc_str = " " + self.tokenizer.sep_token + " ". \
+                # Input will look like this : [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
+                # the sep in the query must be different than the doc sep
+                if self.args.input_representation == 'item_ids':
+                    # the items are tokens e.g. item_21131 , so no need to use separators
+                    # This is not a 100% since we are using bert tokenizer which use sub-words as well.
+                    q_str = str(row[0].replace("[SEP]", ""))
+                else:
+                    # the items are the titles of the items, e.g. "Stranger Things"
+                    q_str = str(row[0].replace("[SEP]", "[ITEM_SEP]"))
+                doc_str = (" " + self.tokenizer.sep_token + " "). \
                     join([t[0] for t in docs_and_labels])
 
+                # Ideally we should cut only first from left to right, this is
+                # an improvement we can implement over encode_plus, which prob.
+                # cuts from right to left.
                 tokenized_input = self.tokenizer.encode_plus(q_str, doc_str,
-                                                    add_special_tokens=True,
-                                                    max_length=self.tokenizer.max_len)["input_ids"]
+                                                             add_special_tokens=True,
+                                                             max_length=self.tokenizer.max_len,
+                                                             only_first=True)["input_ids"]
 
                 padding_length = self.tokenizer.max_len - len(tokenized_input)
                 tokenized_input = tokenized_input + ([self.tokenizer.pad_token_id] * padding_length)
@@ -119,6 +139,9 @@ class LWRFineTuningDataset(data.Dataset):
 
             with open(path, 'wb') as f:
                 pickle.dump(self.instances, f)
+            if self.args.input_representation == 'item_ids':
+                os.makedirs(path_tokenizer)
+                self.tokenizer.save_pretrained(path_tokenizer)
 
     def __len__(self):
         return len(self.instances)

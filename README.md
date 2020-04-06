@@ -26,7 +26,7 @@
         --output_dir $REPO_DIR/data/output_data/lwr \
         --task $TASK \
         --validate_epochs 10 \
-        --sample_data 1000 \
+        --sample_data -1 \
         --max_seq_len 2048 \
         --train_batch_size 60 \
         --val_batch_size 60 \

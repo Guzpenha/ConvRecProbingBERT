@@ -23,8 +23,10 @@ def main():
                         help="the folder to output collection in anserini json format.")
     args = parser.parse_args()
 
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n")
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n")
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv",
+                        lineterminator= "\n").fillna(' ')
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv",
+                        lineterminator= "\n").fillna(' ')
 
     all_df = pd.concat([train, valid])
 

@@ -1,4 +1,5 @@
 from list_wise_reformer.models.utils import toU2UIMNFormat
+from IPython import embed
 import os
 import pandas as pd
 import argparse
@@ -22,8 +23,10 @@ def main():
                         help="the folder containing code for bert4rec")
     args = parser.parse_args()
 
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n")
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n")
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv",
+                        lineterminator= "\n").fillna(' ')
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv",
+                        lineterminator= "\n").fillna(' ')
 
     #transform data to DAM format and write to files
     train, valid, responses, vocab, char_vocab =  toU2UIMNFormat(train, valid)

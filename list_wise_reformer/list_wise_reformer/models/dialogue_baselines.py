@@ -47,7 +47,7 @@ class RM3(AnseriniSCorer):
         super().__init__(*args)
 
     def fit(self, _):
-        self.searcher.set_bm25_similarity(0.9, 0.4)
+        self.searcher.set_lm_dirichlet_similarity(1000.0)
         self.searcher.set_rm3_reranker(10, 10, 0.5)
 
 class QL(AnseriniSCorer):

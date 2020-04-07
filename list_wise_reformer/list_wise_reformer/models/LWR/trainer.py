@@ -1,5 +1,6 @@
 from list_wise_reformer.eval.evaluation import evaluate_models
 from list_wise_reformer.models.LWR.loss import custom_losses
+from list_wise_reformer.models.utils import acumulate_lists
 from IPython import embed
 from tqdm import tqdm
 
@@ -113,11 +114,15 @@ class LWRTrainer():
                     all_labels.append(l.tolist())
             if self.num_validation_instances!=-1 and idx > self.num_validation_instances:
                 break
+
+        if self.args.num_candidate_docs_eval != self.args.num_candidate_docs_train:
+            all_labels, all_logits = acumulate_lists(all_labels, all_logits,
+                                                     self.args.num_candidate_docs_eval)
         return self.evaluate(all_logits, all_labels), all_logits
 
     def test(self):
         logging.info("Starting evaluation on test.")
-        self.num_validation_instances = 0
+        self.num_validation_instances = -1
         res, logits = self.validate(self.test_loader)
         for metric, v in res.items():
             logging.info("Test {} : {:4f}".format(metric, v))

@@ -25,6 +25,11 @@ def run_experiment(args):
         train = train[0:args.sample_data]
         valid = valid[0:args.sample_data]
 
+    assert len(train.columns) - 1 >= args.num_candidate_docs_train, "train doesnt have {} candidate documents".\
+        format(args.num_candidate_docs_train)
+    assert len(valid.columns) - 1 >= args.num_candidate_docs_eval, "val doesnt have {} candidate documents".\
+        format(args.num_candidate_docs_eval)
+
     tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
     tokenizer.add_tokens(['[UTTERANCE_SEP]', '[ITEM_SEP]'])
     tokenizer.max_len = args.max_seq_len
@@ -92,7 +97,9 @@ def main():
     parser.add_argument("--val_batch_size", default=32, type=int, required=False,
                         help="Validation and test batch size.")
     parser.add_argument("--num_candidate_docs_train", default=51, type=int, required=False,
-                        help="Number of documents to use during training")
+                        help="Number of documents to use during training (the input must already have the cand. docs)")
+    parser.add_argument("--num_candidate_docs_eval", default=51, type=int, required=False,
+                        help="Number of documents to use during evaluation (the input must already have the cand. docs)")
     parser.add_argument("--sample_data", default=-1, type=int, required=False,
                          help="Amount of data to sample for training and eval. If no sampling required use -1.")
     parser.add_argument("--input_representation", default="text", type=str, required=False,

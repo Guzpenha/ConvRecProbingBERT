@@ -20,6 +20,7 @@ class AbstractDataloader(metaclass=ABCMeta):
         self.test_df = test_df
         self.tokenizer = tokenizer
         self.num_gpu = torch.cuda.device_count()
+
         if args.max_gpu != -1:
             self.num_gpu = args.max_gpu
         self.actual_train_batch_size = self.args.train_batch_size \
@@ -52,8 +53,8 @@ class LWRFineTuningDataLoader(AbstractDataloader):
         return dataloader
 
     def _get_val_loader(self):
-        num_docs = len(self.val_df.columns) - 1 #the 'query' column
-        dataset = LWRFineTuningDataset(self.args, self.val_df, num_docs,
+        dataset = LWRFineTuningDataset(self.args, self.val_df,
+                                       self.args.num_candidate_docs_eval,
                                        self.tokenizer, 'val', self.item_map)
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.args.val_batch_size,
@@ -61,8 +62,8 @@ class LWRFineTuningDataLoader(AbstractDataloader):
         return dataloader
 
     def _get_test_loader(self):
-        num_docs = len(self.test_df.columns) - 1  # the 'query' column
-        dataset = LWRFineTuningDataset(self.args, self.test_df, num_docs,
+        dataset = LWRFineTuningDataset(self.args, self.test_df,
+                                       self.args.num_candidate_docs_eval,
                                        self.tokenizer, 'test', self.item_map)
         dataloader = data.DataLoader(dataset,
                                      batch_size=self.args.val_batch_size,
@@ -85,9 +86,10 @@ class LWRFineTuningDataset(data.Dataset):
         self._cache_instances()
 
     def _cache_instances(self):
-        signature = "set_{}_n_cand_docs_{}_seq_max_l_{}_sample_{}_rep_{}".\
+        signature = "set_{}_n_eval_docs_{}_n_train_docs{}_seq_max_l_{}_sample_{}_rep_{}".\
             format(self.data_partition,
                    self.num_candidate_docs,
+                   self.args.num_candidate_docs_train,
                    self.args.max_seq_len,
                    self.args.sample_data,
                    self.args.input_representation)
@@ -109,9 +111,10 @@ class LWRFineTuningDataset(data.Dataset):
             for idx, row in enumerate(tqdm(self.data.itertuples(index=False))):
                 docs = row[1:(self.num_candidate_docs)+1]
 
-                #randomize docs order so that rel is not always on first position
                 docs_and_labels = [_ for _ in zip(docs, labels)]
-                random.shuffle(docs_and_labels)
+                #randomize docs order so that rel is not always on first position during training
+                if self.data_partition == 'train':
+                    random.shuffle(docs_and_labels)
                 correct_order_labels = [t[1] for t in docs_and_labels]
 
                 # Input will look like this : [CLS] query [SEP] doc_1 [SEP] doc_2 ... [SEP] doc_n [PAD]
@@ -123,28 +126,47 @@ class LWRFineTuningDataset(data.Dataset):
                 else:
                     # the items are the titles of the items, e.g. "Stranger Things"
                     q_str = str(row[0].replace("[SEP]", "[ITEM_SEP]"))
-                doc_str = (" " + self.tokenizer.sep_token + " "). \
-                    join([t[0] for t in docs_and_labels])
 
-                # Ideally we should cut only first from left to right, this is
-                # an improvement we can implement over encode_plus, which prob.
-                # cuts from right to left.
-                tokenized_input = self.tokenizer.encode_plus(q_str, doc_str,
-                                                             add_special_tokens=True,
-                                                             max_length=self.tokenizer.max_len,
-                                                             only_first=True)["input_ids"]
+                # If we are training with less candidate documents than predicting we need to
+                # generate one instance per candidate document and during test time aggregate
+                # the results per query. Otherwise we only have one instance containing all
+                # candidate documents
+                explode_instances = self.data_partition != "train" and \
+                        self.args.num_candidate_docs_eval != self.args.num_candidate_docs_train
+                documents=[]
+                if explode_instances:
+                    for doc, _  in docs_and_labels:
+                        documents.append(doc)
+                else:
+                    doc_str = (" " + self.tokenizer.sep_token + " "). \
+                        join([t[0] for t in docs_and_labels])
+                    documents.append(doc_str)
 
-                padding_length = self.tokenizer.max_len - len(tokenized_input)
-                tokenized_input = tokenized_input + ([self.tokenizer.pad_token_id] * padding_length)
+                for doc_idx, doc_str in enumerate(documents):
+                    # Ideally we should cut only first from left to right, this is
+                    # an improvement we can implement over encode_plus, which prob.
+                    # cuts from right to left.
+                    tokenized_input = self.tokenizer.encode_plus(q_str, doc_str,
+                                                                 add_special_tokens=True,
+                                                                 max_length=self.tokenizer.max_len,
+                                                                 only_first=True)["input_ids"]
 
-                self.instances.append((torch.LongTensor(tokenized_input),
-                                       torch.LongTensor(correct_order_labels)))
+                    padding_length = self.tokenizer.max_len - len(tokenized_input)
+                    tokenized_input = tokenized_input + ([self.tokenizer.pad_token_id] * padding_length)
+
+                    if explode_instances:
+                        ordered_l_tensor = torch.LongTensor([correct_order_labels[doc_idx]])
+                    else:
+                        ordered_l_tensor = torch.LongTensor(correct_order_labels)
+
+                    self.instances.append((torch.LongTensor(tokenized_input),
+                                           ordered_l_tensor))
                 if idx < 5:
-                    logging.info("Instance {} query string\n\n{}\n".format(idx, q_str))
-                    logging.info("Instance {} doc string ({} candidates)\n\n{}\n".
-                                 format(idx,self.num_candidate_docs, doc_str))
-                    logging.info("Instance {} tokenized input \n\n{}\n".format(idx, tokenized_input))
-                    logging.info("Instance {} reconstructed input \n\n{}\n".format(idx,
+                    logging.info("Set {} Instance {} query string\n\n{}\n".format(self.data_partition, idx, q_str))
+                    logging.info("Set {} Instance {} doc string ({} candidates)\n\n{}\n".
+                                 format(self.data_partition, idx,self.num_candidate_docs, doc_str))
+                    logging.info("Set {} Instance {} tokenized input \n\n{}\n".format(self.data_partition, idx, tokenized_input))
+                    logging.info("Set {} Instance {} reconstructed input \n\n{}\n".format(self.data_partition, idx,
                         self.tokenizer.convert_ids_to_tokens(tokenized_input)))
 
             with open(path, 'wb') as f:

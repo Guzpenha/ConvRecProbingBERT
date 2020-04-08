@@ -37,6 +37,7 @@ def main():
     for run_folder in run_folders:
         with open(run_folder+"config.json") as f:
             config = json.load(f)['args']
+            config['seed'] = str(config['seed'])
             predictions_df = pd.read_csv(run_folder+"predictions.csv")
             qrels = {}
             qrels['model'] = {}
@@ -82,6 +83,7 @@ def main():
     for metric in METRICS:
         col_names+=[metric+"_mean", metric+"_std",
                     metric+"_count", metric+"_max"]
+
     agg_df.columns =  col_names
     agg_df.sort_values(metric+"_mean").to_csv(args.output_folder+args.model_type+"_aggregated_results.csv",
                                               index=False, sep="\t")

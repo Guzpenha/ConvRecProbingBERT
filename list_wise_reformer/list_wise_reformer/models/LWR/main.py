@@ -1,6 +1,7 @@
 from list_wise_reformer.models.LWR.model import ListWiseReformer
 from list_wise_reformer.models.LWR.trainer import LWRTrainer
-from list_wise_reformer.models.LWR.dataset import LWRFineTuningDataLoader
+from list_wise_reformer.models.LWR.dataset import LWRFineTuningDataLoader, \
+    LWRRecommenderPretrainingDataLoader
 from list_wise_reformer.models.LWR.loss import custom_losses
 
 from transformers import BertTokenizer
@@ -31,10 +32,14 @@ def run_experiment(args):
         format(args.num_candidate_docs_eval)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-    tokenizer.add_tokens(['[UTTERANCE_SEP]', '[ITEM_SEP]'])
     tokenizer.max_len = args.max_seq_len
 
-    dataloader = LWRFineTuningDataLoader(args=args, train_df=train,
+    if args.pre_train:
+        dataloader = LWRRecommenderPretrainingDataLoader(args=args, train_df=train,
+                                             val_df=valid, test_df=valid,
+                                             tokenizer=tokenizer)
+    else:
+        dataloader = LWRFineTuningDataLoader(args=args, train_df=train,
                                          val_df=valid, test_df=valid,
                                          tokenizer=tokenizer)
     train_loader, val_loader, test_loader = dataloader.get_pytorch_dataloaders()
@@ -102,10 +107,10 @@ def main():
                         help="Number of documents to use during evaluation (the input must already have the cand. docs)")
     parser.add_argument("--sample_data", default=-1, type=int, required=False,
                          help="Amount of data to sample for training and eval. If no sampling required use -1.")
-    parser.add_argument("--input_representation", default="text", type=str, required=False,
-                        help="Represent the input as 'text' or 'item_ids' (available only for rec)")
 
     #Model hyperparameters
+    parser.add_argument("--input_representation", default="text", type=str, required=False,
+                        help="Represent the input as 'text' or 'item_ids' (available only for rec)")
     parser.add_argument("--num_heads", default=2, type=int, required=False,
                         help="Number of attention heads.")
     parser.add_argument("--lr", default=5e-5, type=float, required=False,
@@ -118,6 +123,9 @@ def main():
                         help="Depth of reformer.")
     parser.add_argument("--loss", default="PointwiseRMSE", type=str, required=False,
                         help="Loss function to use [cross-entropy, "+",".join(custom_losses.keys())+"].")
+    parser.add_argument("--pre_train", default=False, type=bool, required=False)
+    parser.add_argument("--pre_training_objective", default="shuffle_session", type=str, required=False,
+                        help="Pre training objective ['shuffle_session', 'shuffle_session_w_noise'] (only used if pre_train = True).")
 
     args = parser.parse_args()
     args.sacred_ex = ex

@@ -11,7 +11,7 @@ import random
 import os
 import pickle
 
-#Inspired by BERTREC-VAE-Pytorch
+#Software Architecture inspired by BERTREC-VAE-Pytorch repo
 class AbstractDataloader(metaclass=ABCMeta):
     def __init__(self, args, train_df, val_df, test_df, tokenizer):
         self.args = args
@@ -19,6 +19,7 @@ class AbstractDataloader(metaclass=ABCMeta):
         self.val_df = val_df
         self.test_df = test_df
         self.tokenizer = tokenizer
+        self.tokenizer.add_tokens(['[UTTERANCE_SEP]', '[ITEM_SEP]'])
         self.num_gpu = torch.cuda.device_count()
 
         if args.max_gpu != -1:
@@ -168,7 +169,6 @@ class LWRFineTuningDataset(data.Dataset):
                     logging.info("Set {} Instance {} tokenized input \n\n{}\n".format(self.data_partition, idx, tokenized_input))
                     logging.info("Set {} Instance {} reconstructed input \n\n{}\n".format(self.data_partition, idx,
                         self.tokenizer.convert_ids_to_tokens(tokenized_input)))
-
             with open(path, 'wb') as f:
                 pickle.dump(self.instances, f)
             if self.args.input_representation == 'item_ids':
@@ -180,3 +180,105 @@ class LWRFineTuningDataset(data.Dataset):
 
     def __getitem__(self, index):
         return self.instances[index]
+
+class LWRRecommenderPretrainingDataLoader(AbstractDataloader):
+    def __init__(self, args, train_df, val_df, test_df, tokenizer):
+        super().__init__(args, train_df, val_df, test_df, tokenizer)
+        logging.info("Using {} pre-training objective.".
+                     format(self.args.pre_training_objective))
+
+    def get_pytorch_dataloaders(self):
+        train_loader = self._get_loader(self.train_df)
+        val_loader = self._get_loader(self.val_df)
+        test_loader = self._get_loader(self.test_df)
+        return train_loader, val_loader, test_loader
+
+    def _get_loader(self, df):
+        dataset = LWRRecommenderPretrainingDataset(self.args, df, self.tokenizer)
+        dataloader = data.DataLoader(dataset,
+                                     batch_size=self.actual_train_batch_size,
+                                     shuffle=True)
+        return dataloader
+
+class LWRRecommenderPretrainingDataset(data.Dataset):
+    def __init__(self, args, data, tokenizer):
+        random.seed(42)
+        self.args = args
+        self.tokenizer = tokenizer
+        self.data = data
+        self.idx = 0
+
+        self.pre_training_objective = self.args.pre_training_objective
+
+        assert self.pre_training_objective in ['shuffle_session', 'shuffle_session_w_noise'] #, 'token_mask', 'item_mask']
+
+        self.objectives = {
+            'shuffle_session': self.shuffle_session,
+            'shuffle_session_w_noise': self.shuffle_session
+        }
+
+        self.generate_item = self.objectives[self.pre_training_objective]
+
+        if self.pre_training_objective == 'shuffle_session' or \
+            self.pre_training_objective == 'shuffle_session_w_noise':
+            self.data['session'] = data. \
+                apply(lambda r: r['query'].split(" [SEP] ") + [r['relevant_doc']], axis=1)
+            self.sessions = self.data['session'].to_numpy()
+            self.candidate_lists = self.data[self.data.columns[2:(self.args.num_candidate_docs_train) + 1]].to_numpy()
+
+            if self.pre_training_objective == 'shuffle_session_w_noise':
+                self.noise = True
+            else:
+                self.noise = False
+
+    def shuffle_session(self, index):
+        #shuffle the session by items.
+        query = self.sessions[index]
+
+        if self.noise:
+            # 15% inspired by BERT
+            query = random.sample(query, int((len(query) * 0.85)))
+        else:
+            random.shuffle(query)
+
+        #shuffle the candidate list by items.
+        candidates = random.choice(self.candidate_lists)
+        random.shuffle(candidates)
+
+        #the relevant document is a random item from the session
+        candidates_list = [query[-1]] + candidates.tolist()
+        query = query[0:-1] #remove relevant from candidate
+        labels = [1] + ([0] * (self.args.num_candidate_docs_train-1))
+
+        #shuffle candidates
+        aux = list(zip(candidates_list, labels))
+        random.shuffle(aux)
+        candidates_list, labels = zip(*aux)
+
+        q_str = " [ITEM_SEP] ".join(query)
+        doc_str = " {} ".format(self.tokenizer.sep_token).join(candidates_list)
+
+        tokenized_input = self.tokenizer.encode_plus(q_str, doc_str,
+                                                     add_special_tokens=True,
+                                                     max_length=self.tokenizer.max_len,
+                                                     only_first=True)["input_ids"]
+        padding_length = self.tokenizer.max_len - len(tokenized_input)
+        tokenized_input = tokenized_input + ([self.tokenizer.pad_token_id] * padding_length)
+
+        if self.idx < 5:
+            logging.info("Instance {} query string\n\n{}\n".format(self.idx, q_str))
+            logging.info("Instance {} doc string ({} candidates)\n\n{}\n".
+                         format(self.idx, self.args.num_candidate_docs_train, doc_str))
+            logging.info(
+                "Instance {} tokenized input \n\n{}\n".format(self.idx, tokenized_input))
+            logging.info("Instance {} reconstructed input \n\n{}\n".format(self.idx,
+                                                                          self.tokenizer.convert_ids_to_tokens(
+                                                                              tokenized_input)))
+        return (torch.LongTensor(tokenized_input), torch.LongTensor(labels))
+
+    def __len__(self):
+        return len(self.sessions)
+
+    def __getitem__(self, index):
+        self.idx+=1
+        return self.generate_item(index)

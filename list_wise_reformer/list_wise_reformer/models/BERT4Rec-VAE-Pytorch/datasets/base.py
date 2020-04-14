@@ -12,6 +12,7 @@ import os
 import tempfile
 import shutil
 import pickle
+from collections import Counter
 from IPython import embed
 
 class AbstractDataset(metaclass=ABCMeta):
@@ -59,9 +60,28 @@ class AbstractDataset(metaclass=ABCMeta):
         dataset_path = self._get_preprocessed_dataset_path()
         dataset = pickle.load(dataset_path.open('rb'))
         if self.code() == 'preprocessed':
+            #GR has so many items that we get OOM for gpu when putting the model tensors on it
+            if self.args.task == 'gr':
+                max_percentage_items = 0.33
+                cut_threshold = int(max_percentage_items * len(dataset['smap']))
+                filter_id = cut_threshold+1
+                for split in ['train', 'val']:
+                    for user, session in dataset[split].items():
+                        filtered_session = []
+                        for item in session:
+                            if item < cut_threshold:
+                                filtered_session.append(item)
+                            else:
+                                filtered_session.append(filter_id)
+                        dataset[split][user] = filtered_session
+
+                for k, v in list(dataset['smap'].items()):
+                    if v > (cut_threshold+1):
+                        del(dataset['smap'][k])
             dataset['test'] = dataset['val'].copy()
             for k, v in dataset['val'].items():
                 dataset['val'][k] = [v[0]]
+
         return dataset
 
     def preprocess(self):

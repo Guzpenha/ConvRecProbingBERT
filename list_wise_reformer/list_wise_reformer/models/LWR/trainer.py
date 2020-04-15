@@ -45,7 +45,7 @@ class LWRTrainer():
         self.max_grad_norm = 0.5
 
     def fit(self):
-        logging.info("Total steps per epoch : {}".format(len(self.train_loader)))
+        logging.info("Total batches per epoch : {}".format(len(self.train_loader)))
         logging.info("Validating every {} epoch.".format(self.validate_epochs))
         tqdm_dataloader = tqdm(range(self.num_epochs))
         tqdm_dataloader.set_description('Epoch 0, batch 0, train batch nDCG@10 _, val nDCG@10 _')
@@ -82,7 +82,7 @@ class LWRTrainer():
                 tqdm_dataloader. \
                     set_description('Epoch {} batch {}, train batch nDCG@10 {:.3f}, '
                                     'val nDCG@10 {:.3f}'.format(epoch + 1, batch_count+1,
-                                                                train_ndcg, val_ndcg))
+                                                                avg_train_ndcg/(batch_count+1), val_ndcg))
 
             if self.validate_epochs > 0 and epoch % self.validate_epochs == 0:
                 res, _ = self.validate(loader = self.val_loader)
@@ -91,7 +91,7 @@ class LWRTrainer():
                     self.best_ndcg = val_ndcg
                 if self.args.sacred_ex != None:
                     self.args.sacred_ex.log_scalar('eval_ndcg_10', val_ndcg, epoch+1)
-                    self.args.sacred_ex.log_scalar('train_ndcg_10', avg_train_ndcg/batch_count, epoch + 1)
+                    self.args.sacred_ex.log_scalar('train_ndcg_10', avg_train_ndcg/(batch_count+1), epoch + 1)
 
             tqdm_dataloader. \
                 set_description('Epoch {} batch {}, train batch nDCG@10 {:.3f}, '
@@ -122,7 +122,7 @@ class LWRTrainer():
 
     def test(self):
         logging.info("Starting evaluation on test.")
-        self.num_validation_instances = -1
+        self.num_validation_instances = -1 # no sample on test.
         res, logits = self.validate(self.test_loader)
         for metric, v in res.items():
             logging.info("Test {} : {:4f}".format(metric, v))

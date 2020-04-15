@@ -283,15 +283,13 @@ def toItemIDFormat(df, item_map, tokenizer):
         q_items = []
         for item in r['query'].split(" [SEP] "):
             if item not in item_map:
-                item_map[item] = "item"+str(i_count)
-                tokenizer.add_tokens(["item"+str(i_count)])
+                item_map[item] = "[ITEM_"+str(i_count)+"]"
                 i_count+=1
             q_items.append(str(item_map[item]))
         query=" [SEP] ".join(q_items)
 
         if r['relevant_doc'] not in item_map:
-            item_map[r['relevant_doc']] = "item"+str(i_count)
-            tokenizer.add_tokens(["item"+str(i_count)])
+            item_map[r['relevant_doc']] = "[ITEM_"+str(i_count)+"]"
             i_count+=1
         rel_doc = item_map[r['relevant_doc']]
 
@@ -300,8 +298,7 @@ def toItemIDFormat(df, item_map, tokenizer):
             if "non_relevant_" in c:
                 item = r[c]
                 if item not in item_map:
-                    item_map[item] = "item"+str(i_count)
-                    tokenizer.add_tokens(["item"+str(i_count)])
+                    item_map[item] = "[ITEM_"+str(i_count)+"]"
                     i_count += 1
                 non_rel_items.append(item_map[item])
 

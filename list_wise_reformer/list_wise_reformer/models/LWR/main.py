@@ -110,7 +110,7 @@ def main():
 
     #Model hyperparameters
     parser.add_argument("--input_representation", default="text", type=str, required=False,
-                        help="Represent the input as 'text' or 'item_ids' (available only for rec)")
+                        help="Represent the input as ['text', 'ids', 'text_and_ids'] ('ids' and 'text_and_ids' is available only for rec)")
     parser.add_argument("--num_heads", default=2, type=int, required=False,
                         help="Number of attention heads.")
     parser.add_argument("--lr", default=5e-5, type=float, required=False,
@@ -125,7 +125,7 @@ def main():
                         help="Loss function to use [cross-entropy, "+",".join(custom_losses.keys())+"].")
     parser.add_argument("--pre_train", default=False, type=bool, required=False)
     parser.add_argument("--pre_training_objective", default="shuffle_session", type=str, required=False,
-                        help="Pre training objective ['shuffle_session', 'shuffle_session_w_noise'] (only used if pre_train = True).")
+                        help="Pre training objective ['shuffle_session', 'shuffle_session_w_noise', 'session', 'session_w_noise'] (only used if pre_train = True).")
 
     args = parser.parse_args()
     args.sacred_ex = ex

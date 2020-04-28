@@ -6,3 +6,4 @@ data/recommendation/
 rec_probing/*.egg-info
 *.pyc
 data/output_data/
+data/search/

@@ -10,7 +10,8 @@ import logging
 
 class NextSentencePredictionProbe():
     def __init__(self, number_candidates, input_data, 
-                number_queries_per_user, batch_size, probe_type):
+                number_queries_per_user, batch_size, 
+                probe_type, bert_model):
         random.seed(42)
 
         self.number_candidates = number_candidates
@@ -20,9 +21,9 @@ class NextSentencePredictionProbe():
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.model = BertForNextSentencePrediction.\
-            from_pretrained('bert-base-cased')
+            from_pretrained(bert_model)
         self.tokenizer = BertTokenizer.\
-            from_pretrained('bert-base-cased')
+            from_pretrained(bert_model)
         
         if probe_type == "recommendation":
             self.sentences_generator = self.get_sentences_rec

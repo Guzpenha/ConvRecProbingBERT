@@ -16,15 +16,15 @@ source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 for TASK in 'ml25m' 'gr' 'music'
 do
-    for NUM_CANDIDATES in 1 5
+    for NUM_CANDIDATES in 1 5    
     do
         srun python run_probes.py \
             --task $TASK \
             --probe_type recommendation \
-            --input_folder $REPO_DIR/data/data/recommendation/ \
+            --input_folder $REPO_DIR/data/recommendation/ \
             --output_folder $REPO_DIR/data/output_data/probes/ \
             --number_queries 100 \
-            --number_candidates $NUM_CANDIDATES\ 
+            --number_candidates $NUM_CANDIDATES \
             --batch_size 8
 
     done

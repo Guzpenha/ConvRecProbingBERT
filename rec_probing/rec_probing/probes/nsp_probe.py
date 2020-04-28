@@ -18,6 +18,7 @@ class NextSentencePredictionProbe():
         self.data = input_data
         self.number_queries_per_user = number_queries_per_user
         self.batch_size = batch_size
+        self.n_gpu = torch.cuda.device_count()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.model = BertForNextSentencePrediction.\
@@ -140,26 +141,29 @@ class NextSentencePredictionProbe():
     def run_probe(self):
         all_scores = []
         all_labels = []
-        self.model = self.model.to(self.device)
+        self.model = self.model.to(self.device)        
+        if self.n_gpu > 1:
+            self.model = torch.nn.DataParallel(self.model)
         self.model.eval()
         logging.info("Running BERT predictions for calculating probe results")
         for batch_idx, batch in tqdm(enumerate(self.data_loader)):
-            # batch = tuple(t.to(self.device) for t in batch)
+            batch = tuple(t.to(self.device) for t in batch)
             labels = batch[3]
             inputs = {"input_ids": batch[0],
                         "attention_mask": batch[1],
                         "token_type_ids": batch[2]}
             seq_relationship_logits = self.model(**inputs)
-            all_scores.append(softmax(seq_relationship_logits[0], dim=1))
-            all_labels.append(labels)
+            all_scores.append(softmax(seq_relationship_logits[0], dim=1).
+                            detach().cpu().numpy()[:,0].tolist())
+            all_labels.append(labels.detach().cpu().numpy().tolist())
 
         results = []
         query_scores, query_labels = [], []
         logging.info("Aggregating predications per user query.")
         query_id = 0
         for batch_idx, (score, label) in enumerate(zip(all_scores, all_labels)):
-            query_scores = query_scores + score.detach().cpu().numpy()[:,0].tolist()
-            query_labels = query_labels + label.detach().cpu().numpy().tolist()
+            query_scores = query_scores + score
+            query_labels = query_labels + label
             if (batch_idx+1) % (self.number_candidates + 1) == 0:
                 results.append([query_scores, query_labels, 
                     self.all_raw_queries[query_id]])

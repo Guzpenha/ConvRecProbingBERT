@@ -7,6 +7,8 @@ from tqdm import tqdm
 import torch
 import random
 import logging
+import functools
+import operator
 
 class NextSentencePredictionProbe():
     def __init__(self, number_candidates, input_data, 
@@ -19,6 +21,7 @@ class NextSentencePredictionProbe():
         self.number_queries_per_user = number_queries_per_user
         self.batch_size = batch_size
         self.n_gpu = torch.cuda.device_count()
+        self.batch_size = self.batch_size * max(1, self.n_gpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.model = BertForNextSentencePrediction.\
@@ -157,13 +160,17 @@ class NextSentencePredictionProbe():
                             detach().cpu().numpy()[:,0].tolist())
             all_labels.append(labels.detach().cpu().numpy().tolist())
 
+        # flatten lists
+        all_scores = functools.reduce(operator.iconcat, all_scores, []) 
+        all_labels = functools.reduce(operator.iconcat, all_labels, []) 
+
         results = []
         query_scores, query_labels = [], []
-        logging.info("Aggregating predications per user query.")
+        logging.info("Aggregating predications per query.")
         query_id = 0
         for batch_idx, (score, label) in enumerate(zip(all_scores, all_labels)):
-            query_scores = query_scores + score
-            query_labels = query_labels + label
+            query_scores.append(score)
+            query_labels.append(label)
             if (batch_idx+1) % (self.number_candidates + 1) == 0:
                 results.append([query_scores, query_labels, 
                     self.all_raw_queries[query_id]])

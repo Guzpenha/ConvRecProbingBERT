@@ -34,7 +34,7 @@ def main():
     args = parser.parse_args()
 
     path = "{}/{}/train.csv".format(args.input_folder, args.task)
-    df = pd.read_csv(path, lineterminator="\n")[0:args.number_queries]
+    df = pd.read_csv(path, lineterminator="\n", nrows=args.number_queries)
 
     rec_probe = NextSentencePredictionProbe(number_candidates = args.number_candidates, 
                                             input_data = df,

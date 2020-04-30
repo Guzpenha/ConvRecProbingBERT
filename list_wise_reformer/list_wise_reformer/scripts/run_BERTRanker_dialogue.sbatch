@@ -2,11 +2,11 @@
 
 #SBATCH --partition=general
 #SBATCH --qos=long
-#SBATCH --time=24:00:00
+#SBATCH --time=20:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:1
-#SBATCH --mem-per-cpu=6000
+#SBATCH --gres=gpu:2
+#SBATCH --mem-per-cpu=8000
 #SBATCH --mail-type=END
 
 module use /opt/insy/modulefiles
@@ -17,10 +17,10 @@ REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 
 #Either uncomment the following, or call this using run_all_dialogue_baselines.sh
 #TASK=music
-#TASK=gr
-#TASK=ml25m
+#TASK=books
+TASK=movies
 
-for SEED in 42 1 2 3 4
+for SEED in 42
 do
   srun python run_dialogue_baseline.py \
     --task $TASK \

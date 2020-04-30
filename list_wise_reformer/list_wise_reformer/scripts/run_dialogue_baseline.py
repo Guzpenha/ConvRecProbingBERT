@@ -26,19 +26,20 @@ model_classes = {
 @ex.main
 def run_experiment(args):
     args.run_id = str(ex.current_run._id)
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n")
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n")
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n").fillna(' ')
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n").fillna(' ')
 
     if args.ranker in ['bm25', 'ql', 'rm3']:
         model = model_classes[args.ranker](args.data_folder+
                                            args.task+"/anserini_index")
     else:
-        model = model_classes[args.ranker]()
+        model = model_classes[args.ranker](args)
 
     results = {}
     model_name = model.__class__.__name__
     logging.info("Fitting {} for {}".format(model_name, args.task))
     model.fit(train)
+    del(train)
     logging.info("Predicting")
     preds = model.predict(valid, valid.columns[1:])
 

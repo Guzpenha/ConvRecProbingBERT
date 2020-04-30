@@ -43,3 +43,27 @@ ALL_RUNS="${ML25M_random}${ML25M_pop}${ML25M_bprmf}${ML25M_sasrec}${music_random
 srun python evaluate_models.py \
   --predictions_folders $ALL_RUNS \
   --output_folder /tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha/data/results/
+
+  #DIALOGUE
+music_traditional_IR="${DIR}ql/1/,${DIR}rm3/7/,"
+music_DAM="${DIR}dam/10/,${DIR}dam/11/,${DIR}dam/12/,${DIR}dam/13/,${DIR}dam/14/,"
+music_MSN="${DIR}msn/10/,${DIR}msn/11/,${DIR}msn/12/,${DIR}msn/13/,${DIR}msn/14/,"
+music_BERT="${DIR}bert4dialogue/16/,${DIR}bert4dialogue/23/,${DIR}bert4dialogue/24/,${DIR}bert4dialogue/25/,${DIR}bert4dialogue/26/,"
+
+movies_traditional_IR="${DIR}ql/20/,${DIR}rm3/5/,"
+movies_DAM="${DIR}dam/0/,${DIR}dam/1/,${DIR}dam/2/,${DIR}dam/3/,${DIR}dam/4/,"
+movies_MSN="${DIR}msn/0/,${DIR}msn/1/,${DIR}msn/2/,${DIR}msn/3/,"
+movies_BERT="${DIR}bert4dialogue/51/,${DIR}bert4dialogue/52/,${DIR}bert4dialogue/54/,"
+
+books_traditional_IR="${DIR}ql/21/,${DIR}rm3/6/,"
+books_DAM="${DIR}dam/5/,${DIR}dam/6/,${DIR}dam/7/,${DIR}dam/8/,"
+books_MSN="${DIR}msn/5/,${DIR}msn/6/,${DIR}msn/7/,${DIR}msn/8/,${DIR}msn/9/,"
+books_BERT="${DIR}bert4dialogue/50/,${DIR}bert4dialogue/53/,${DIR}bert4dialogue/55/"
+
+ALL_RUNS="${music_traditional_IR}${music_DAM}${music_MSN}${music_BERT}${movies_traditional_IR}${movies_DAM}${movies_MSN}${movies_BERT}${books_traditional_IR}${books_DAM}${books_MSN}${books_BERT}"
+
+#srun python evaluate_models.py \
+#  --predictions_folders $ALL_RUNS \
+#  --output_folder /tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha/data/results/ \
+#  --model_type ranker
+                                           

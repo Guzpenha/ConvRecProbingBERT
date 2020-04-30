@@ -14,13 +14,17 @@ class NextSentencePredictionProbe():
     def __init__(self, number_candidates, input_data, 
                 number_queries_per_user, batch_size, 
                 probe_type, bert_model):
-        random.seed(42)
+        self.seed = 42
+        random.seed(self.seed)        
+        torch.manual_seed(self.seed)
 
         self.number_candidates = number_candidates
         self.data = input_data
         self.number_queries_per_user = number_queries_per_user
         self.batch_size = batch_size
         self.n_gpu = torch.cuda.device_count()
+        if self.n_gpu > 0:
+            torch.cuda.manual_seed_all(self.seed)
         self.batch_size = self.batch_size * max(1, self.n_gpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -149,7 +153,7 @@ class NextSentencePredictionProbe():
             self.model = torch.nn.DataParallel(self.model)
         self.model.eval()
         logging.info("Running BERT predictions for calculating probe results")
-        for batch_idx, batch in tqdm(enumerate(self.data_loader)):
+        for batch_idx, batch in tqdm(enumerate(self.data_loader), total==len(self.data_loader)):
             batch = tuple(t.to(self.device) for t in batch)
             labels = batch[3]
             inputs = {"input_ids": batch[0],
@@ -177,3 +181,28 @@ class NextSentencePredictionProbe():
                 query_scores, query_labels = [], []
                 query_id+=1
         return results
+
+    def pre_train_using_probe(self, num_epochs):
+        self.model = self.model.to(self.device)
+        if self.n_gpu > 1:
+            self.model = torch.nn.DataParallel(self.model)
+
+        logging.info("Pre-training BERT for probe.")
+        for epoch in range(num_epochs):
+            logging.info("Starting epoch {}".format(epoch+1))
+            for batch_idx, batch in tqdm(enumerate(self.data_loader), total=len(self.data_loader)):
+                self.model.train()
+                batch = tuple(t.to(self.device) for t in batch)
+                inputs = {"input_ids": batch[0],
+                            "attention_mask": batch[1],
+                            "token_type_ids": batch[2],
+                            "next_sentence_label": batch[3]}
+
+                outputs = self.model(**inputs)
+                loss = outputs[0]
+
+                if self.n_gpu > 1:
+                    loss = loss.mean()
+                loss.backward()
+
+        return self.model

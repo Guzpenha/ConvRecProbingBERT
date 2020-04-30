@@ -1,7 +1,7 @@
-# from rec_probing.probes.mlm_probe import *
 from rec_probing.probes.nsp_probe import *
-
 from IPython import embed
+
+import os
 import argparse
 import logging
 import pandas as pd
@@ -28,6 +28,8 @@ def main():
                         help="number of total probe queries.")
     parser.add_argument("--batch_size", default=1, type=int, required=False,
                         help="batch_size")
+    parser.add_argument("--num_epochs", default=1, type=int, required=False,
+                        help="num_epochs")
     parser.add_argument("--bert_model", default="bert-base-cased", type=str, required=False,
                         help="bert model name ['bert-base-cased' or 'bert-large-cased']")
 
@@ -47,12 +49,23 @@ def main():
          columns = ["query_scores", "labels", "raw_queries"])
     results_df["relevant>non_relevant_1"] = results_df.\
         apply(lambda r: r['query_scores'][0]> r['query_scores'][1], axis=1)
-    results_df["score_rel-score_non_relevant_1"] = results_df.\
-        apply(lambda r: r['query_scores'][0] - r['query_scores'][1], axis=1)
-    logging.info("Percentage correct: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
-    file_signature = "probe_type_{}_task_{}_num_candidates_{}_num_queries_{}_model_{}".\
+    logging.info("Percentage correct before pre-training: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
+
+    pre_trained_model = probe.pre_train_using_probe(args.num_epochs)
+
+    results = probe.run_probe()
+    results_df = pd.DataFrame(results,\
+         columns = ["query_scores", "labels", "raw_queries"])
+    results_df["relevant>non_relevant_1"] = results_df.\
+        apply(lambda r: r['query_scores'][0]> r['query_scores'][1], axis=1)
+    logging.info("Percentage correct after pre-training: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
+
+    model_signature = "pre_trained_on_probe_type_{}_task_{}_num_candidates_{}_num_queries_{}_model_{}".\
         format(args.probe_type, args.task, args.number_candidates, args.number_queries, args.bert_model)
-    results_df.to_csv(args.output_folder+file_signature+".csv", index=False)
+
+    if not os.path.exists(args.output_folder+model_signature):
+        os.makedirs(args.output_folder+model_signature)
+    pre_trained_model.save_pretrained(args.output_folder+model_signature)
 
 if __name__ == "__main__":
     main()

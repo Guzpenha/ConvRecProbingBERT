@@ -1,4 +1,5 @@
 from transformers import BertForNextSentencePrediction, BertTokenizer
+from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.nn.functional import softmax
 from torch.utils.data import TensorDataset, DataLoader
 from IPython import embed
@@ -18,6 +19,7 @@ class NextSentencePredictionProbe():
         random.seed(self.seed)        
         torch.manual_seed(self.seed)
 
+        self.warmup_steps = 0
         self.number_candidates = number_candidates
         self.data = input_data
         self.number_queries_per_user = number_queries_per_user
@@ -148,12 +150,14 @@ class NextSentencePredictionProbe():
     def run_probe(self):
         all_scores = []
         all_labels = []
-        self.model = self.model.to(self.device)        
-        if self.n_gpu > 1:
+
+        if self.n_gpu > 1 and not isinstance(self.model, torch.nn.DataParallel):
             self.model = torch.nn.DataParallel(self.model)
+        self.model = self.model.to(self.device)
         self.model.eval()
+
         logging.info("Running BERT predictions for calculating probe results")
-        for batch_idx, batch in tqdm(enumerate(self.data_loader), total==len(self.data_loader)):
+        for batch_idx, batch in tqdm(enumerate(self.data_loader), total=len(self.data_loader)):
             batch = tuple(t.to(self.device) for t in batch)
             labels = batch[3]
             inputs = {"input_ids": batch[0],
@@ -183,9 +187,24 @@ class NextSentencePredictionProbe():
         return results
 
     def pre_train_using_probe(self, num_epochs):
-        self.model = self.model.to(self.device)
-        if self.n_gpu > 1:
+        self.model.train()
+        if self.n_gpu > 1 and not isinstance(self.model, torch.nn.DataParallel):
             self.model = torch.nn.DataParallel(self.model)
+        self.model.to(self.device)
+        self.model.zero_grad()
+
+        # Prepare optimizer and schedule (linear warmup and decay)
+        no_decay = ['bias', 'LayerNorm.weight']
+        optimizer_grouped_parameters = [
+            {'params': [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
+             'weight_decay': 0.0},
+            {'params': [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)],
+             'weight_decay': 0.0}
+        ]
+        optimizer = AdamW(optimizer_grouped_parameters, lr=5e-5, eps=1e-8)
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer, num_warmup_steps=self.warmup_steps, num_training_steps=num_epochs*len(self.data_loader)
+        )
 
         logging.info("Pre-training BERT for probe.")
         for epoch in range(num_epochs):
@@ -193,10 +212,12 @@ class NextSentencePredictionProbe():
             for batch_idx, batch in tqdm(enumerate(self.data_loader), total=len(self.data_loader)):
                 self.model.train()
                 batch = tuple(t.to(self.device) for t in batch)
+                # labels are 'inverted' in transformers library (0 means next sentence is true)
+                next_sentence_labels = 1-batch[3] 
                 inputs = {"input_ids": batch[0],
                             "attention_mask": batch[1],
                             "token_type_ids": batch[2],
-                            "next_sentence_label": batch[3]}
+                            "next_sentence_label": next_sentence_labels}
 
                 outputs = self.model(**inputs)
                 loss = outputs[0]
@@ -204,5 +225,10 @@ class NextSentencePredictionProbe():
                 if self.n_gpu > 1:
                     loss = loss.mean()
                 loss.backward()
+                optimizer.step()
+                scheduler.step()
+                self.model.zero_grad()
 
+        if isinstance(self.model, torch.nn.DataParallel):
+            self.model = self.model.module
         return self.model

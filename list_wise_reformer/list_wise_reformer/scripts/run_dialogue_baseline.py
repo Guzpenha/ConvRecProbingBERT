@@ -26,14 +26,12 @@ model_classes = {
 @ex.main
 def run_experiment(args):
     args.run_id = str(ex.current_run._id)
+    train = pd.read_csv(args.data_folder+args.task+"/train.csv", 
+        lineterminator= "\n").fillna(' ')
     if args.nrows != -1:
-        train = pd.read_csv(args.data_folder+args.task+"/train.csv", 
-            lineterminator= "\n", nrows=args.nrows).fillna(' ')
         valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", 
             lineterminator= "\n", nrows=args.nrows).fillna(' ')
     else:
-        train = pd.read_csv(args.data_folder+args.task+"/train.csv", 
-            lineterminator= "\n").fillna(' ')
         valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", 
             lineterminator= "\n").fillna(' ')
 

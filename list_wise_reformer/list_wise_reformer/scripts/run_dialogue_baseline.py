@@ -26,8 +26,16 @@ model_classes = {
 @ex.main
 def run_experiment(args):
     args.run_id = str(ex.current_run._id)
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv", lineterminator= "\n").fillna(' ')
-    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", lineterminator= "\n").fillna(' ')
+    if args.nrows != -1:
+        train = pd.read_csv(args.data_folder+args.task+"/train.csv", 
+            lineterminator= "\n", nrows=args.nrows).fillna(' ')
+        valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", 
+            lineterminator= "\n", nrows=args.nrows).fillna(' ')
+    else:
+        train = pd.read_csv(args.data_folder+args.task+"/train.csv", 
+            lineterminator= "\n").fillna(' ')
+        valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", 
+            lineterminator= "\n").fillna(' ')
 
     if args.ranker in ['bm25', 'ql', 'rm3']:
         model = model_classes[args.ranker](args.data_folder+
@@ -38,7 +46,11 @@ def run_experiment(args):
     results = {}
     model_name = model.__class__.__name__
     logging.info("Fitting {} for {}".format(model_name, args.task))
-    model.fit(train)
+    if args.ranker == 'bert':
+        model.fit(train, valid)
+    else:
+        model.fit(train)
+
     del(train)
     logging.info("Predicting")
     preds = model.predict(valid, valid.columns[1:])
@@ -75,8 +87,16 @@ def main():
                         help="the folder containing data")
     parser.add_argument("--seed", default=42, type=int, required=False,
                         help="random seed")
-    parser.add_argument("--num_epochs", default=2, type=int, required=False,
-                        help="Number of epochs for recommenders that do optimization.")
+    parser.add_argument("--batch_size", default=5, type=int, required=False,
+                        help="batch_size")
+    parser.add_argument("--bert_model", default='bert-base-cased', type=str, required=False,
+                        help="default is bert-base-cased.")
+    parser.add_argument("--nrows", default=-1, type=int, required=False,
+                        help="-1 if all rows, otherwise the number of training and test instances to use.")
+    parser.add_argument("--num_epochs", default=1, type=int, required=False,
+                        help="Number of epochs for models that do optimization.")
+    parser.add_argument("--logging_steps", default=100, type=int, required=False,
+                        help="Number of steps to log evaluation metric.")
     parser.add_argument("--ranker", type=str, required=True,
                         help="ranker to use : "+",".join(model_classes.keys()))
     parser.add_argument("--output_dir", default=None, type=str, required=True,

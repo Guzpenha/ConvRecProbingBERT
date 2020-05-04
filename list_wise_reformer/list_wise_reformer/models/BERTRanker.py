@@ -15,24 +15,25 @@ from transformers import glue_convert_examples_to_features\
 
 from list_wise_reformer.models.utils import \
     ConversationResponseRankingProcessor as CRRProcessor
+from list_wise_reformer.eval.evaluation import evaluate_models
 
 from IPython import embed
 
 class BERTRanker():
 
     def __init__(self, args):
-        self.tokenizer = BertTokenizer.from_pretrained('bert-large-cased')
-        self.model = BertForSequenceClassification.from_pretrained('bert-large-cased')
+        self.tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+        self.model = BertForSequenceClassification.from_pretrained(args.bert_model)
 
-        self.batch_size = 5
+        self.batch_size = args.batch_size
         self.max_seq_length = 300
-        self.num_train_epochs = 1
+        self.num_train_epochs = args.num_epochs
         self.learning_rate = 5e-5
         self.adam_epsilon = 1e-8
         self.warmup_steps = 0
         self.gradient_accumulation_steps=1
         self.max_grad_norm=1.0
-        self.logging_steps=50
+        self.logging_steps=args.logging_steps
         self.seed = args.seed
         self.args = args
 
@@ -40,7 +41,7 @@ class BERTRanker():
         self.n_gpu = torch.cuda.device_count()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def fit(self, sessions):
+    def fit(self, sessions, validation_sessions):
         examples = self.processor.\
             get_examples_from_sessions(sessions,
                                        2)        
@@ -48,6 +49,7 @@ class BERTRanker():
             logging.info("Loading instances from file.")
             f = open(self.args.data_folder+self.args.task+"/train_examples_bert.pk", "rb")
             features = pickle.load(f)
+            f.close()
         else:
             logging.info("Generating train instances")
             features = convert_examples_to_features(examples,
@@ -60,6 +62,7 @@ class BERTRanker():
                                                 pad_token_segment_id=0)
             f = open(self.args.data_folder+self.args.task+"/train_examples_bert.pk", "wb")
             pickle.dump(features, f)
+            f.close()
                 
         # Convert to Tensors and build dataset
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
@@ -130,14 +133,38 @@ class BERTRanker():
                     self.model.zero_grad()
                     global_step += 1
 
-    def predict(self, sessions, prediction_cols):        
+                if (step+ 1) % self.logging_steps == 0:
+                    preds = self.predict(validation_sessions, 
+                            validation_sessions.columns[1:], training_eval=True)
+                    results = {'bert_val': {} }
+                    results['bert_val']['preds'] = preds
+                    # only first doc is relevant -> [1, 0, 0, ..., 0]
+                    labels = [[1] + ([0] *  (len(validation_sessions.columns[1:])))
+                                        for _ in range(validation_sessions.shape[0])]
+                    results['bert_val']['labels'] = labels
+                    results = evaluate_models(results)
+                    logging.info("BERT validation scores")
+                    for metric in ['recip_rank', 'ndcg_cut_10']:
+                        res = 0
+                        for q in results['bert_val']['eval'].keys():
+                            res += results['bert_val']['eval'][q][metric]
+                        res /= len(results['bert_val']['eval'].keys())
+                        logging.info("%s: %.4f" % (metric, res))
+
+    def predict(self, sessions, prediction_cols, training_eval=False):        
         examples = self.processor.\
             get_examples_from_sessions(sessions,
                                        len(prediction_cols))
-        if os.path.exists(self.args.data_folder+self.args.task+"/test_examples_bert.pk"):
+        if training_eval:
+            path = self.args.data_folder+self.args.task+"/val_for_train_examples_bert.pk"
+        else:
+            path = self.args.data_folder+self.args.task+"/test_examples_bert.pk"
+
+        if os.path.exists(path):            
             logging.info("Loading instances from file.")
-            f = open(self.args.data_folder+self.args.task+"/test_examples_bert.pk", "rb")
+            f = open(path, "rb")
             features = pickle.load(f)
+            f.close()
         else:
             logging.info("Generating test instances")
             features = convert_examples_to_features(examples,
@@ -148,8 +175,10 @@ class BERTRanker():
                                                 pad_on_left=False,
                                                 pad_token=self.tokenizer.convert_tokens_to_ids([self.tokenizer.pad_token])[0],
                                                 pad_token_segment_id=0)
-            f = open(self.args.data_folder+self.args.task+"/test_examples_bert.pk", "wb")
+            
+            f = open(path, "wb")
             pickle.dump(features, f)
+            f.close()
 
         # Convert to Tensors and build dataset
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)

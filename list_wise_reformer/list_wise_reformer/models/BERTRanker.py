@@ -21,7 +21,8 @@ from IPython import embed
 
 class BERTRanker():
 
-    def __init__(self, args):
+    def __init__(self, args, sacred_ex):
+        self.sacred_ex = sacred_ex
         self.tokenizer = BertTokenizer.from_pretrained(args.bert_model)
         self.model = BertForSequenceClassification.from_pretrained(args.bert_model)
 
@@ -150,6 +151,12 @@ class BERTRanker():
                             res += results['bert_val']['eval'][q][metric]
                         res /= len(results['bert_val']['eval'].keys())
                         logging.info("%s: %.4f" % (metric, res))
+                        self.sacred_ex.log_scalar(metric, res, global_step+1)
+
+                if self.args.early_stopping_steps != -1 and \
+                        global_step > self.args.early_stopping_steps:
+                    logging.info("Early stop.")
+                    break
 
     def predict(self, sessions, prediction_cols, training_eval=False):        
         examples = self.processor.\

@@ -41,7 +41,7 @@ def run_experiment(args):
         model = model_classes[args.ranker](args.data_folder+
                                            args.task+"/anserini_index")
     else:
-        model = model_classes[args.ranker](args)
+        model = model_classes[args.ranker](args, ex)
 
     results = {}
     model_name = model.__class__.__name__
@@ -97,6 +97,8 @@ def main():
                         help="Number of epochs for models that do optimization.")
     parser.add_argument("--logging_steps", default=100, type=int, required=False,
                         help="Number of steps to log evaluation metric.")
+    parser.add_argument("--early_stopping_steps", default=-1, type=int, required=False,
+                        help="Whether to stop early (<number of steps>) or not (<-1>).")
     parser.add_argument("--ranker", type=str, required=True,
                         help="ranker to use : "+",".join(model_classes.keys()))
     parser.add_argument("--output_dir", default=None, type=str, required=True,

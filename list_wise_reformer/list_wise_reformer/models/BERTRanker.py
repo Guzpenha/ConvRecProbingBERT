@@ -23,7 +23,8 @@ class BERTRanker():
 
     def __init__(self, args, sacred_ex):
         self.sacred_ex = sacred_ex
-        self.tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+        self.tokenizer = BertTokenizer.\
+            from_pretrained(args.bert_model.split("model_")[-1])
         self.model = BertForSequenceClassification.from_pretrained(args.bert_model)
 
         self.batch_size = args.batch_size
@@ -45,7 +46,7 @@ class BERTRanker():
     def fit(self, sessions, validation_sessions):
         examples = self.processor.\
             get_examples_from_sessions(sessions,
-                                       2)        
+                                       2)
         if os.path.exists(self.args.data_folder+self.args.task+"/train_examples_bert.pk"):
             logging.info("Loading instances from file.")
             f = open(self.args.data_folder+self.args.task+"/train_examples_bert.pk", "rb")

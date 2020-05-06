@@ -1,12 +1,14 @@
-export CUDA_VISIBLE_DEVICES=5,6,7
+export CUDA_VISIBLE_DEVICES=4,5,6,7
 source /ssd/home/gustavo/recsys2020penha/env/bin/activate
 
 REPO_DIR=/ssd/home/gustavo/recsys2020penha
 NUMBER_PROBE_QUERIES=100000
 
-for PROBE_TYPE in 'recommendation' 'search'
+# for PROBE_TYPE in 'recommendation' 'search'
+for PROBE_TYPE in 'search'
 do
-    for TASK in 'ml25m' 'gr' 'music'
+    # for TASK in 'ml25m' 'gr' 'music'
+    for TASK in 'gr' 'music'
     do
         python pre_train_BERT.py \
             --task $TASK \
@@ -17,6 +19,6 @@ do
             --number_candidates 1 \
             --batch_size 32 \
             --num_epochs 5 \
-            --bert_model "bert-large-cased"  
+            --bert_model "bert-base-cased"  
     done
 done

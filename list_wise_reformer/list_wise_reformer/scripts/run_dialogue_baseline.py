@@ -25,6 +25,9 @@ model_classes = {
 
 @ex.main
 def run_experiment(args):
+    if "pre_trained" in args.ranker:
+        args.ranker = "bert"
+
     args.run_id = str(ex.current_run._id)
     train = pd.read_csv(args.data_folder+args.task+"/train.csv", 
         lineterminator= "\n").fillna(' ')
@@ -110,7 +113,9 @@ def main():
             logging.StreamHandler()
         ]
     )
-
+    #Store pretrained name on config.
+    if "pre_trained_on" in args.bert_model:
+        args.ranker = 'pre_trained_on' + args.bert_model.split("pre_trained_on")[-1]
     ex.observers.append(FileStorageObserver(args.output_dir))
     ex.add_config({'args': args})
     return ex.run()

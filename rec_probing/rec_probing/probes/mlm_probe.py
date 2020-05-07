@@ -12,7 +12,7 @@ import functools
 import operator
 
 class MaskedLanguageModelProbe():
-    def __init__(self, input_data, batch_size, bert_model, item_domain):
+    def __init__(self, input_data, batch_size, bert_model, item_domain, sentence_type):
         self.seed = 42
         random.seed(self.seed)        
         torch.manual_seed(self.seed)
@@ -32,14 +32,25 @@ class MaskedLanguageModelProbe():
         self.tokenizer = BertTokenizer.\
             from_pretrained(bert_model)
 
+        if sentence_type == "type-I":
+            self.sentences_generator = self.sentences_generator_1
+        elif sentence_type == "type-II":
+            self.sentences_generator = self.sentences_generator_2
+
         self._generate_probe_data()
 
-
-    def sentences_generator(self, row):
+    def sentences_generator_1(self, row):
         item_title = row[1]
         categories = [c.lower() for c in row[2].split("|")]
         #Example: Pulp Fiction is a [MASK] movie. label = drama and etc
         sentence = "{} is a [MASK] {}.".format(item_title, self.item_domain)
+        return sentence, categories
+
+    def sentences_generator_2(self, row):
+        item_title = row[1]
+        categories = [c.lower() for c in row[2].split("|")]
+        #Example: Pulp Fiction is a [MASK] movie. label = drama and etc
+        sentence = "{} is a {} of the [MASK] genre.".format(item_title, self.item_domain)
         return sentence, categories
 
     def _encode_sentence(self, sentence, labels, max_length=50):

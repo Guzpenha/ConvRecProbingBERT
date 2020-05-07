@@ -25,6 +25,8 @@ def main():
                         help="batch_size")
     parser.add_argument("--bert_model", default="bert-base-cased", type=str, required=False,
                         help="bert model name ['bert-base-cased' or 'bert-large-cased']")
+    parser.add_argument("--sentence_type", default="type-I", type=str, required=False,
+                        help="prompt sentence type ['type-I' or 'type-II']")
 
     args = parser.parse_args()
 
@@ -39,7 +41,8 @@ def main():
     probe = MaskedLanguageModelProbe(input_data = df,
                                     batch_size = args.batch_size,
                                     bert_model = args.bert_model,
-                                    item_domain = domain)
+                                    item_domain = domain,
+                                    sentence_type = args.sentence_type)
     results = probe.run_probe()
     results_df = pd.DataFrame(results,\
          columns = ["preds", "labels", "raw_queries"])
@@ -49,8 +52,8 @@ def main():
     results_df["R@10"] = results_df.apply(lambda r: len(r["intersection_10"])/len(r["labels"].split(" ")),axis=1)
     logging.info("Average R@50: {}".format(results_df["R@50"].mean()))
     logging.info("Average R@10: {}".format(results_df["R@10"].mean()))
-    file_signature = "probe_type_categories_task_{}_num_queries_{}_model_{}".\
-        format(args.task, args.number_queries, args.bert_model)
+    file_signature = "probe_type_categories_task_{}_num_queries_{}_model_{}_sentence_type_{}".\
+        format(args.task, args.number_queries, args.bert_model, args.sentence_type)
     results_df.to_csv(args.output_folder+file_signature+".csv", index=False)
 
 if __name__ == "__main__":

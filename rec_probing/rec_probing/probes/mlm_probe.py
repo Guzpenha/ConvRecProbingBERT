@@ -42,7 +42,7 @@ class MaskedLanguageModelProbe():
         sentence = "{} is a [MASK] {}.".format(item_title, self.item_domain)
         return sentence, categories
 
-    def _encode_sentence(self, sentence, labels, max_length=50):
+    def _encode_sentence(self, sentence, labels, max_length=100):
         pad_token=0
         pad_token_segment_id=0
         input_ids = self.tokenizer.encode(sentence,                                                 
@@ -79,6 +79,11 @@ class MaskedLanguageModelProbe():
         for idx, row in enumerate(tqdm(self.data.itertuples(index=False), 
                                   desc="Generating probe dataset.")):
             sentence, labels = self.sentences_generator(row)
+            # long sentences due to long titles "have no mask" token because of the 
+            # 50 maxlen cut threshold.
+            if len(sentence.split(" ")) > 40: 
+                continue
+
             input_ids, attention_masks, token_type_ids, label_training, labels = \
                     self._encode_sentence(sentence, labels)
 

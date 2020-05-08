@@ -85,6 +85,7 @@ class MaskedLanguageModelProbe():
         all_token_type_ids = []
         all_labels_training = []
         all_labels = []
+        sentences_ids = []
 
         logging.info("Generating probe dataset.")
         for idx, row in enumerate(tqdm(self.data.itertuples(index=False), 
@@ -103,6 +104,7 @@ class MaskedLanguageModelProbe():
             all_token_type_ids.append(token_type_ids)
             all_labels_training.append(label_training)
             all_labels.append(labels)
+            sentences_ids.append(idx)            
 
             if idx < 5:
                 logging.info("Probing example %d" % idx)
@@ -116,7 +118,8 @@ class MaskedLanguageModelProbe():
                                      torch.tensor(all_attention_masks, dtype = torch.long),
                                      torch.tensor(all_token_type_ids, dtype = torch.long),
                                      torch.tensor(all_labels_training, dtype = torch.long),
-                                     torch.tensor(all_labels, dtype = torch.long))
+                                     torch.tensor(all_labels, dtype = torch.long),
+                                     torch.tensor(sentences_ids, dtype = torch.long))
 
         self.data_loader = DataLoader(self.dataset, 
             batch_size=self.batch_size, 
@@ -136,6 +139,7 @@ class MaskedLanguageModelProbe():
         for batch_idx, batch in tqdm(enumerate(self.data_loader), total=len(self.data_loader)):
             batch = tuple(t.to(self.device) for t in batch)
             labels = batch[4]
+            raw_query_idx = batch[5]
             inputs = {"input_ids": batch[0],
                         "attention_mask": batch[1],
                         "token_type_ids": batch[2]}
@@ -153,8 +157,7 @@ class MaskedLanguageModelProbe():
 
                 results.append([self.tokenizer.decode(preds),
                                 self.tokenizer.decode(l),
-                                self.tokenizer.decode(input_ids)])
-
+                                self.data.iloc[raw_query_idx]["title"].values[0]])
         return results
 
     def pre_train_using_probe(self, num_epochs):

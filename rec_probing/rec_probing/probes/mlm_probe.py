@@ -10,6 +10,55 @@ import random
 import logging
 import functools
 import operator
+import fasttext
+
+def filter_categories_df(df, bert_model, 
+                        fast_text_language_detector_path='./data/lid.176.ftz'):
+    replace_rules = {        
+        "Children's Music": "children",
+        "Children's" : "children",
+        "Album-Oriented Rock (AOR)": "rock",
+        " & " : "|"
+    }
+    language_pred_model = fasttext.load_model(fast_text_language_detector_path)
+    
+    tqdm.pandas()
+
+    logging.info("Renaming categories.")
+    for k, v in replace_rules.items():
+        df["genres"] = df.progress_apply(lambda r,key=k,value=v: r["genres"].replace(key, value), axis=1)    
+
+    tokenizer = BertTokenizer.from_pretrained(bert_model)
+    df["split_genres"] = df.apply(lambda r: r["genres"].lower().split("|"), axis=1)
+    count = df.shape[0]
+    filtered_df = df
+
+    filtered_df = filtered_df.drop_duplicates(["title"])
+    logging.info("Filtered {} duplicated titles.".
+            format(count-filtered_df.shape[0]))
+    count = filtered_df.shape[0]
+
+    logging.info("Predicting item`s language.")
+    filtered_df["is_english_item"] = df.\
+        progress_apply(lambda r,f=language_pred_model.predict:
+             f(r["title"], k=1)[0][0] == '__label__en', axis=1)
+    filtered_df = filtered_df[filtered_df["is_english_item"]]
+    logging.info("Filtered {} non-english items.".
+            format(count-filtered_df.shape[0]))
+    count = filtered_df.shape[0]
+
+    logging.info("Checking if labels are tokens in tokenizer.")
+    filtered_df["split_genres"] = filtered_df.progress_apply(lambda r,t=tokenizer:
+         [l for l in r["split_genres"] if l in t.get_vocab()], axis=1)    
+    filtered_df["no_valid_labels_in_vocab"] = filtered_df.\
+        apply(lambda r: len(r["split_genres"])==0, axis=1)
+    filtered_df = filtered_df[~ filtered_df["no_valid_labels_in_vocab"]]
+    logging.info("Filtered {} with no valid labels.".
+            format(count-filtered_df.shape[0]))
+    count = filtered_df.shape[0]
+    filtered_df["genres"] = filtered_df.apply(lambda r: "|".join(r["split_genres"]), axis=1)    
+    print(filtered_df["genres"].unique())
+    return filtered_df[["item", "title", "genres"]]
 
 class MaskedLanguageModelProbe():
     def __init__(self, input_data, batch_size, bert_model, item_domain, sentence_type):
@@ -95,6 +144,8 @@ class MaskedLanguageModelProbe():
             # 50 maxlen cut threshold.
             if len(self.tokenizer.encode(sentence, add_special_tokens=True)) > 40:
                 continue
+            if row[2] == "(no genres listed)":
+                continue
 
             input_ids, attention_masks, token_type_ids, label_training, labels = \
                     self._encode_sentence(sentence, labels)
@@ -138,15 +189,15 @@ class MaskedLanguageModelProbe():
         results = []
         for batch_idx, batch in tqdm(enumerate(self.data_loader), total=len(self.data_loader)):
             batch = tuple(t.to(self.device) for t in batch)
-            labels = batch[4]
-            raw_query_idx = batch[5]
+            labels = batch[4]            
             inputs = {"input_ids": batch[0],
                         "attention_mask": batch[1],
                         "token_type_ids": batch[2]}
             tokens_prediction_scores = self.model(**inputs)[0]
 
             for i in range(len(batch[0])):
-                input_ids = batch[0][i]
+                input_ids = batch[0][i]                
+                raw_query_idx = batch[5][i].detach().cpu().numpy().tolist()
                 masked_idx = (input_ids == self.tokenizer.mask_token_id).nonzero().item()
                 token_predictions = tokens_prediction_scores[i, masked_idx, :]
                 probs = token_predictions.softmax(dim=0)
@@ -156,8 +207,9 @@ class MaskedLanguageModelProbe():
                     detach().cpu().numpy().tolist()
 
                 results.append([self.tokenizer.decode(preds),
-                                self.tokenizer.decode(l),
-                                self.data.iloc[raw_query_idx]["title"].values[0]])
+                                self.data.iloc[raw_query_idx]["genres"].replace("|", " "),
+                                self.data.iloc[raw_query_idx]["title"],
+                                values.detach().cpu().numpy().tolist()])
         return results
 
     def pre_train_using_probe(self, num_epochs):

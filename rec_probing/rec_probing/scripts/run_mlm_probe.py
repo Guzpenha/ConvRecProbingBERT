@@ -32,9 +32,14 @@ def main():
 
     path = "{}/{}/categories.csv".format(args.input_folder, args.task)
     if args.number_queries != -1:
-        df = pd.read_csv(path, lineterminator="\n", nrows=args.number_queries)
+        df = pd.read_csv(path, sep=",", lineterminator='\n', encoding='utf-8', nrows=args.number_queries)
     else:
-        df = pd.read_csv(path, lineterminator="\n")
+        df = pd.read_csv(path, sep=",", lineterminator='\n', encoding='utf-8')
+    df = df.replace('\r','', regex=True) 
+    df.columns = ["item", "title", "genres"]
+
+    df = filter_categories_df(df, args.bert_model, 
+            args.input_folder.split("recommendation")[0]+"/lid.176.ftz")
 
     domain = {'ml25m':'movie', 'gr':'book', 'music':'music album'} [args.task]
 
@@ -45,7 +50,9 @@ def main():
                                     sentence_type = args.sentence_type)
     results = probe.run_probe()
     results_df = pd.DataFrame(results,\
-         columns = ["preds", "labels", "raw_queries"])
+         columns = ["preds", "labels", "raw_queries", "preds_scores"])
+    results_df["preds"] = results_df.apply(lambda r: r["preds"].lower(), axis=1)
+    results_df["labels"] = results_df.apply(lambda r: r["labels"].lower(), axis=1)
     results_df["intersection_50"] = results_df.apply(lambda r: set(r["preds"].split(" ")[0:50]).intersection(set(r["labels"].split(" "))),axis=1)
     results_df["R@50"] = results_df.apply(lambda r: len(r["intersection_50"])/len(r["labels"].split(" ")),axis=1)
     results_df["intersection_10"] = results_df.apply(lambda r: set(r["preds"].split(" ")[0:10]).intersection(set(r["labels"].split(" "))),axis=1)

@@ -1,4 +1,5 @@
 from rec_probing.probes.nsp_probe import *
+from rec_probing.probes.cls_probe import *
 
 from IPython import embed
 import argparse
@@ -29,18 +30,26 @@ def main():
                         help="batch_size")
     parser.add_argument("--bert_model", default="bert-base-cased", type=str, required=False,
                         help="bert model name ['bert-base-cased' or 'bert-large-cased']")
+    parser.add_argument("--probe_technique", default="nsp", type=str, required=False,
+                        help="probe technique for comparing sentences ['nsp' or 'cls-sim']")
 
     args = parser.parse_args()
 
     path = "{}/{}/train.csv".format(args.input_folder, args.task)
     df = pd.read_csv(path, lineterminator="\n", nrows=args.number_queries)
 
-    probe = NextSentencePredictionProbe(number_candidates = args.number_candidates, 
-                                            input_data = df,
-                                            number_queries_per_user=1,
-                                            batch_size = args.batch_size,
-                                            probe_type = args.probe_type,
-                                            bert_model = args.bert_model)
+    if args.probe_technique == "nsp":
+        probe_class = NextSentencePredictionProbe 
+    else:
+        probe_class = CLSTokenSimilarityProbe 
+
+    probe = probe_class(number_candidates = args.number_candidates, 
+                        input_data = df,
+                        number_queries_per_user=1,
+                        batch_size = args.batch_size,
+                        probe_type = args.probe_type,
+                        bert_model = args.bert_model)
+
     results = probe.run_probe()
     results_df = pd.DataFrame(results,\
          columns = ["query_scores", "labels", "raw_queries"])
@@ -49,8 +58,8 @@ def main():
     results_df["score_rel-score_non_relevant_1"] = results_df.\
         apply(lambda r: r['query_scores'][0] - r['query_scores'][1], axis=1)
     logging.info("Percentage correct: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
-    file_signature = "probe_type_{}_task_{}_num_candidates_{}_num_queries_{}_model_{}".\
-        format(args.probe_type, args.task, args.number_candidates, args.number_queries, args.bert_model)
+    file_signature = "probe_type_{}_task_{}_num_candidates_{}_num_queries_{}_model_{}_technique_{}".\
+        format(args.probe_type, args.task, args.number_candidates, args.number_queries, args.bert_model, args.probe_technique)
     results_df.to_csv(args.output_folder+file_signature+".csv", index=False)
 
 if __name__ == "__main__":

@@ -144,8 +144,6 @@ class MaskedLanguageModelProbe():
             # 50 maxlen cut threshold.
             if len(self.tokenizer.encode(sentence, add_special_tokens=True)) > 40:
                 continue
-            if row[2] == "(no genres listed)":
-                continue
 
             input_ids, attention_masks, token_type_ids, label_training, labels = \
                     self._encode_sentence(sentence, labels)

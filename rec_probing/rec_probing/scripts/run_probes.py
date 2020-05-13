@@ -1,5 +1,5 @@
 from rec_probing.probes.nsp_probe import *
-from rec_probing.probes.cls_probe import *
+from rec_probing.probes.sim_probe import *
 
 from IPython import embed
 import argparse
@@ -31,7 +31,7 @@ def main():
     parser.add_argument("--bert_model", default="bert-base-cased", type=str, required=False,
                         help="bert model name ['bert-base-cased' or 'bert-large-cased']")
     parser.add_argument("--probe_technique", default="nsp", type=str, required=False,
-                        help="probe technique for comparing sentences ['nsp' or 'cls-sim']")
+                        help="probe technique for comparing sentences ['nsp', 'cls-sim', 'mean-sim']")
 
     args = parser.parse_args()
 
@@ -41,14 +41,15 @@ def main():
     if args.probe_technique == "nsp":
         probe_class = NextSentencePredictionProbe 
     else:
-        probe_class = CLSTokenSimilarityProbe 
+        probe_class = TokenSimilarityProbe 
 
     probe = probe_class(number_candidates = args.number_candidates, 
                         input_data = df,
                         number_queries_per_user=1,
                         batch_size = args.batch_size,
                         probe_type = args.probe_type,
-                        bert_model = args.bert_model)
+                        bert_model = args.bert_model,
+                        probe_technique = args.probe_technique)
 
     results = probe.run_probe()
     results_df = pd.DataFrame(results,\

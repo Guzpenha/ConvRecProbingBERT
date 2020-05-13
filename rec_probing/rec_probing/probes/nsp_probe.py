@@ -14,7 +14,7 @@ import operator
 class NextSentencePredictionProbe():
     def __init__(self, number_candidates, input_data, 
                 number_queries_per_user, batch_size, 
-                probe_type, bert_model):
+                probe_type, bert_model, probe_technique):
         self.seed = 42
         random.seed(self.seed)        
         torch.manual_seed(self.seed)

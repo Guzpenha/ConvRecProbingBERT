@@ -11,14 +11,15 @@ import logging
 import functools
 import operator
 
-class CLSTokenSimilarityProbe():
+class TokenSimilarityProbe():
     def __init__(self, number_candidates, input_data, 
                 number_queries_per_user, batch_size, 
-                probe_type, bert_model):
+                probe_type, bert_model, probe_technique):
         self.seed = 42
         random.seed(self.seed)        
         torch.manual_seed(self.seed)
 
+        self.probe_technique = probe_technique
         self.warmup_steps = 0
         self.number_candidates = number_candidates
         self.data = input_data
@@ -88,7 +89,7 @@ class CLSTokenSimilarityProbe():
     def _encode_sentence(self, sentence, max_length=50):
         pad_token=0
         pad_token_segment_id=0
-        input_ids = self.tokenizer.encode(sentence,                                                 
+        input_ids = self.tokenizer.encode(sentence,
                                           add_special_tokens=True,
                                           max_length=max_length)        
         attention_mask = [1] * len(input_ids)
@@ -173,12 +174,17 @@ class CLSTokenSimilarityProbe():
             inputs = {"input_ids": batch[0],
                         "attention_mask": batch[1],
                         "token_type_ids": batch[2]}
-            cls_pooled_rep = self.model(**inputs)[0][:, 0]
+            
+            if self.probe_technique == 'cls-sim':
+                pooled_rep = self.model(**inputs)[0][:, 0]
+            elif self.probe_technique == 'mean-sim':
+                pooled_rep = self.model(**inputs)[0].mean(dim=1)
+
             sentences_count = 0
-            for i in range(len(cls_pooled_rep)):
+            for i in range(len(pooled_rep)):
                 if i % 2 == 0:
-                    all_scores.append(torch.dot(cls_pooled_rep[i],
-                                                cls_pooled_rep[i+1]).
+                    all_scores.append(torch.dot(pooled_rep[i],
+                                                pooled_rep[i+1]).
                                                 detach().cpu().numpy().tolist())
 
         results = []

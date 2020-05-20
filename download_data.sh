@@ -46,7 +46,14 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1n0vRIZM7uDRPqjXP8K6QSniRliE4Buy4' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1n0vRIZM7uDRPqjXP8K6QSniRliE4Buy4" -O goodreads_interactions_dedup.json.gz  && rm -rf /tmp/cookies.txt
 gunzip goodreads_interactions_dedup.json.gz
 rm goodreads_interactions_dedup.json.gz
-
+#categories file
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1ah0_KpUterVi-AHxJ03iKD6O0NfbK0md' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1ah0_KpUterVi-AHxJ03iKD6O0NfbK0md" -O gooreads_book_genres_initial.json.gz && rm -rf /tmp/cookies.txt
+gunzip gooreads_book_genres_initial.json.gz
+rm gooreads_book_genres_initial.json.gz
+#file with other information of books (we use the publication year)
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1LXpK1UfqtP89H1tYy0pBGHjYk8IhigUK' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1LXpK1UfqtP89H1tYy0pBGHjYk8IhigUK" -O goodreads_books.json.gz && rm -rf /tmp/cookies.txt
+gunzip goodreads_books.json.gz
+rm goodreads_books.json.gz
 
 #================================================#
 #Download dataset for conversational rec data
@@ -56,3 +63,5 @@ cd ../dialogue
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1naj_8j0MeCH2ZZ8u8WKLJqKDEoc5kggN' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1naj_8j0MeCH2ZZ8u8WKLJqKDEoc5kggN" -O dialogues.csv.zip && rm -rf /tmp/cookies.txt
 unzip dialogues.csv.zip
 rm dialogues.csv.zip
+
+

@@ -26,7 +26,7 @@ def main():
     parser.add_argument("--bert_model", default="bert-base-cased", type=str, required=False,
                         help="bert model name ['bert-base-cased' or 'bert-large-cased']")
     parser.add_argument("--sentence_type", default="type-I", type=str, required=False,
-                        help="prompt sentence type ['type-I' or 'type-II']")
+                        help="prompt sentence type ['type-I', 'type-II', 'no-item']")
 
     args = parser.parse_args()
 

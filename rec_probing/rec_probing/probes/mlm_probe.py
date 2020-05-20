@@ -85,6 +85,8 @@ class MaskedLanguageModelProbe():
             self.sentences_generator = self.sentences_generator_1
         elif sentence_type == "type-II":
             self.sentences_generator = self.sentences_generator_2
+        elif sentence_type == "no-item":
+            self.sentences_generator = self.sentences_generator_3
 
         self._generate_probe_data()
 
@@ -100,6 +102,12 @@ class MaskedLanguageModelProbe():
         categories = [c.lower() for c in row[2].split("|")]
         #Example: Pulp Fiction is a [MASK] movie. label = drama and etc
         sentence = "{} is a {} of the [MASK] genre.".format(item_title, self.item_domain)
+        return sentence, categories
+
+    def sentences_generator_3(self, row):        
+        categories = [c.lower() for c in row[2].split("|")]
+        #Example: It is a [MASK] movie. label = drama and etc
+        sentence = "It is a {} of the [MASK] genre.".format(self.item_domain)
         return sentence, categories
 
     def _encode_sentence(self, sentence, labels, max_length=50):

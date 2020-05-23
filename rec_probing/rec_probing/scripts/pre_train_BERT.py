@@ -50,21 +50,21 @@ def main():
                                             probe_type = args.probe_type,
                                             bert_model = args.bert_model,
                                             items_popularity=pop)
-    results = probe.run_probe()
-    results_df = pd.DataFrame(results,\
-         columns = ["query_scores", "labels", "raw_queries"])
-    results_df["relevant>non_relevant_1"] = results_df.\
-        apply(lambda r: r['query_scores'][0]> r['query_scores'][1], axis=1)
-    logging.info("Percentage correct before pre-training: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
+    # results = probe.run_probe()
+    # results_df = pd.DataFrame(results,\
+    #      columns = ["query_scores", "labels", "raw_queries"])
+    # results_df["relevant>non_relevant_1"] = results_df.\
+    #     apply(lambda r: r['query_scores'][0]> r['query_scores'][1], axis=1)
+    # logging.info("Percentage correct before pre-training: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
 
     pre_trained_model = probe.pre_train_using_probe(args.num_epochs)
 
-    results = probe.run_probe()
-    results_df = pd.DataFrame(results,\
-         columns = ["query_scores", "labels", "raw_queries"])
-    results_df["relevant>non_relevant_1"] = results_df.\
-        apply(lambda r: r['query_scores'][0]> r['query_scores'][1], axis=1)
-    logging.info("Percentage correct after pre-training: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
+    # results = probe.run_probe()
+    # results_df = pd.DataFrame(results,\
+    #      columns = ["query_scores", "labels", "raw_queries"])
+    # results_df["relevant>non_relevant_1"] = results_df.\
+    #     apply(lambda r: r['query_scores'][0]> r['query_scores'][1], axis=1)
+    # logging.info("Percentage correct after pre-training: %f" % (100 * results_df["relevant>non_relevant_1"].sum()/results_df.shape[0]))
 
     model_signature = "pre_trained_on_probe_type_{}_task_{}_num_candidates_{}_num_queries_{}_model_{}".\
         format(args.probe_type, args.task, args.number_candidates, args.number_queries, args.bert_model)

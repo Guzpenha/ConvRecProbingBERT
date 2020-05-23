@@ -4,6 +4,9 @@ from torch.nn.functional import softmax
 from torch.utils.data import TensorDataset, DataLoader
 from IPython import embed
 from tqdm import tqdm
+from numpy.random import choice
+import numpy as np
+from scipy.special import softmax as softmax_scipy
 
 import torch
 import random
@@ -14,12 +17,13 @@ import operator
 class NextSentencePredictionProbe():
     def __init__(self, number_candidates, input_data, 
                 number_queries_per_user, batch_size, 
-                probe_type, bert_model, probe_technique):
+                probe_type, bert_model, items_popularity = {}, probe_technique=""):
         self.seed = 42
         random.seed(self.seed)        
         torch.manual_seed(self.seed)
 
         self.warmup_steps = 0
+        self.items_popularity = items_popularity
         self.number_candidates = number_candidates
         self.data = input_data
         self.number_queries_per_user = number_queries_per_user
@@ -39,6 +43,10 @@ class NextSentencePredictionProbe():
             self.sentences_generator = self.get_sentences_rec
         elif probe_type == "search":
             self.sentences_generator = self.get_sentences_review
+        elif probe_type == "recommendation-pop":
+            self.sentences_generator = self.get_sentences_rec_popular
+        elif probe_type == "search-inv":
+            self.sentences_generator = self.get_sentences_review_inv
 
         self._generate_probe_data()
 
@@ -58,6 +66,27 @@ class NextSentencePredictionProbe():
             raw_query.append(non_relevant_item)
             sentences_neg.append(("{}. ".format(non_relevant_item),
                                   "{}".format(review)))
+        sentences.append((sentence_pos, sentences_neg))
+        raw_queries.append(raw_query)
+
+        return sentences, raw_queries
+
+    def get_sentences_review_inv(self, row):
+        review = row[0].replace("[ITEM_NAME]", "[UNK]")
+        relevant_doc = row[1]
+        candidate_docs = row[2:(2+self.number_candidates)]
+        sentences = []
+        raw_queries = []
+        
+        raw_query = [review, relevant_doc]
+        sentence_pos = ("{}. ".format(review),
+                        "{}".format(relevant_doc))
+
+        sentences_neg = []  
+        for non_relevant_item in candidate_docs:
+            raw_query.append(non_relevant_item)
+            sentences_neg.append(("{}. ".format(review),
+                                  "{}".format(non_relevant_item)))
         sentences.append((sentence_pos, sentences_neg))
         raw_queries.append(raw_query)
 
@@ -84,7 +113,31 @@ class NextSentencePredictionProbe():
             raw_queries.append(raw_query)
         return sentences, raw_queries
 
-    def _encode_sentence_pair(self, sentence_a, sentence_b, max_length=50):
+    def get_sentences_rec_popular(self, row, n_items_from_history=5):
+        user_session = row[0].split(" [SEP] ") + [row[1]]
+        candidate_docs = row[2:(2+self.number_candidates)]
+        
+        # items_popularity = [1/len(user_session)] * len(user_session)  #equal probability
+        items_pop = [self.items_popularity[item]  if item in self.items_popularity else 0 for item in user_session]
+        items_pop = softmax_scipy(np.log(items_pop))
+        sentences = []
+        raw_queries = []
+        for i in range(self.number_queries_per_user):
+            drawn_items = choice(user_session, n_items_from_history+1,
+              p=items_pop)
+            raw_query = [(drawn_items)]
+            sentence_pos = (", ".join(drawn_items[0:-1]),
+                            (drawn_items[-1]))
+            sentences_neg = []
+            for non_relevant_item in candidate_docs:
+                raw_query.append(non_relevant_item)
+                sentences_neg.append((", ".join(drawn_items[0:-1]),
+                                     non_relevant_item))
+            sentences.append((sentence_pos, sentences_neg))
+            raw_queries.append(raw_query)
+        return sentences, raw_queries
+
+    def _encode_sentence_pair(self, sentence_a, sentence_b, max_length=100):
         pad_token=0
         pad_token_segment_id=0
         pos_encoded = self.tokenizer.encode_plus(sentence_a, 

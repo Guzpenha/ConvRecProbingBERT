@@ -38,12 +38,18 @@ def main():
     path = "{}/{}/train.csv".format(args.input_folder, args.task)
     df = pd.read_csv(path, lineterminator="\n", nrows=args.number_queries)
 
+    data_path = args.output_folder.split("/output_data")[0]
+    df_pop = pd.read_csv("{}/recommendation/{}/popularity.csv".format(data_path, args.task))
+    df_pop.columns = ["title", "pop"]
+    pop = df_pop.set_index("title").to_dict()["pop"]
+
     probe = NextSentencePredictionProbe(number_candidates = args.number_candidates, 
                                             input_data = df,
                                             number_queries_per_user=1,
                                             batch_size = args.batch_size,
                                             probe_type = args.probe_type,
-                                            bert_model = args.bert_model)
+                                            bert_model = args.bert_model,
+                                            items_popularity=pop)
     results = probe.run_probe()
     results_df = pd.DataFrame(results,\
          columns = ["query_scores", "labels", "raw_queries"])

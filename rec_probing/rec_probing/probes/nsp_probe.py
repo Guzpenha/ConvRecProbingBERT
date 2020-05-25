@@ -113,7 +113,7 @@ class NextSentencePredictionProbe():
             raw_queries.append(raw_query)
         return sentences, raw_queries
 
-    def get_sentences_rec_popular(self, row, n_items_from_history=5):
+    def get_sentences_rec_popular(self, row, n_items_from_history=1):
         user_session = row[0].split(" [SEP] ") + [row[1]]
         candidate_docs = row[2:(2+self.number_candidates)]
         
@@ -137,7 +137,7 @@ class NextSentencePredictionProbe():
             raw_queries.append(raw_query)
         return sentences, raw_queries
 
-    def _encode_sentence_pair(self, sentence_a, sentence_b, max_length=100):
+    def _encode_sentence_pair(self, sentence_a, sentence_b, max_length=50):
         pad_token=0
         pad_token_segment_id=0
         pos_encoded = self.tokenizer.encode_plus(sentence_a, 

@@ -30,7 +30,7 @@ class BERTRanker():
         self.batch_size = args.batch_size
         self.max_seq_length = 300
         self.num_train_epochs = args.num_epochs
-        self.learning_rate = 5e-5
+        self.learning_rate = args.learning_rate
         self.adam_epsilon = 1e-8
         self.warmup_steps = 0
         self.gradient_accumulation_steps=1

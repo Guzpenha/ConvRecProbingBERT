@@ -1,4 +1,4 @@
-from transformers import BertForMaskedLM, BertTokenizer
+from transformers import RobertaForMaskedLM, RobertaTokenizer, BertForMaskedLM, BertTokenizer
 from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.nn.functional import softmax
 from torch.utils.data import TensorDataset, DataLoader
@@ -28,7 +28,10 @@ def filter_categories_df(df, bert_model,
     for k, v in replace_rules.items():
         df["genres"] = df.progress_apply(lambda r,key=k,value=v: r["genres"].replace(key, value), axis=1)    
 
-    tokenizer = BertTokenizer.from_pretrained(bert_model)
+    if 'roberta' in bert_model:
+        tokenizer = RobertaTokenizer.from_pretrained(bert_model)
+    else:
+        tokenizer = BertTokenizer.from_pretrained(bert_model)
     df["split_genres"] = df.apply(lambda r: r["genres"].lower().split("|"), axis=1)
     count = df.shape[0]
     filtered_df = df
@@ -76,10 +79,16 @@ class MaskedLanguageModelProbe():
         self.batch_size = self.batch_size * max(1, self.n_gpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.model = BertForMaskedLM.\
-            from_pretrained(bert_model)
-        self.tokenizer = BertTokenizer.\
-            from_pretrained(bert_model)
+        if "roberta" in bert_model:
+            self.model = RobertaForMaskedLM.\
+                from_pretrained(bert_model)
+            self.tokenizer = RobertaTokenizer.\
+                from_pretrained(bert_model)
+        else:
+            self.model = BertForMaskedLM.\
+                from_pretrained(bert_model)
+            self.tokenizer = BertTokenizer.\
+                from_pretrained(bert_model)
 
         if sentence_type == "type-I":
             self.sentences_generator = self.sentences_generator_1
@@ -94,26 +103,25 @@ class MaskedLanguageModelProbe():
         item_title = row[1]
         categories = [c.lower() for c in row[2].split("|")]
         #Example: Pulp Fiction is a [MASK] movie. label = drama and etc
-        sentence = "{} is a [MASK] {}.".format(item_title, self.item_domain)
+        sentence = "{} is a {} {}.".format(item_title, self.tokenizer.mask_token, self.item_domain)
         return sentence, categories
 
     def sentences_generator_2(self, row):
         item_title = row[1]
         categories = [c.lower() for c in row[2].split("|")]
         #Example: Pulp Fiction is a [MASK] movie. label = drama and etc
-        sentence = "{} is a {} of the [MASK] genre.".format(item_title, self.item_domain)
+        sentence = "{} is a {} of the {} genre.".format(item_title, self.item_domain, self.tokenizer.mask_token)
         return sentence, categories
 
     def sentences_generator_3(self, row):        
         categories = [c.lower() for c in row[2].split("|")]
         #Example: It is a [MASK] movie. label = drama and etc
-        sentence = "It is a {} of the [MASK] genre.".format(self.item_domain)
+        sentence = "It is a {} of the {} genre.".format(self.item_domain, self.tokenizer.mask_token)
         return sentence, categories
 
     def _encode_sentence(self, sentence, labels, max_length=50):
-        pad_token=0
-        pad_token_segment_id=0
-        input_ids = self.tokenizer.encode(sentence,                                                 
+        pad_token = self.tokenizer.pad_token_id
+        input_ids = self.tokenizer.encode(sentence,
                                           add_special_tokens=True,
                                           max_length=max_length)        
         attention_mask = [1] * len(input_ids)
@@ -233,7 +241,7 @@ class MaskedLanguageModelProbe():
             {'params': [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)],
              'weight_decay': 0.0}
         ]
-        optimizer = AdamW(optimizer_grouped_parameters, lr=5e-5, eps=1e-8)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=5e-6, eps=1e-8)
         scheduler = get_linear_schedule_with_warmup(
             optimizer, num_warmup_steps=self.warmup_steps, num_training_steps=num_epochs*len(self.data_loader)
         )

@@ -1,4 +1,4 @@
-from transformers import BertModel, BertTokenizer
+from transformers import BertModel, BertTokenizer, RobertaModel, RobertaTokenizer
 from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.nn.functional import softmax
 from torch.utils.data import TensorDataset, DataLoader
@@ -32,10 +32,16 @@ class TokenSimilarityProbe():
         self.batch_size = self.batch_size * max(1, self.n_gpu)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.model = BertModel.\
-            from_pretrained(bert_model)
-        self.tokenizer = BertTokenizer.\
-            from_pretrained(bert_model)
+        if "roberta" in bert_model:
+            self.model = RobertaModel.\
+                from_pretrained(bert_model)
+            self.tokenizer = RobertaTokenizer.\
+                from_pretrained(bert_model)        
+        else:
+            self.model = BertModel.\
+                from_pretrained(bert_model)
+            self.tokenizer = BertTokenizer.\
+                from_pretrained(bert_model)
         
         if probe_type == "recommendation":
             self.sentences_generator = self.get_sentences_rec
@@ -87,8 +93,7 @@ class TokenSimilarityProbe():
         return sentences, raw_queries
 
     def _encode_sentence(self, sentence, max_length=50):
-        pad_token=0
-        pad_token_segment_id=0
+        pad_token=self.tokenizer.pad_token_id
         input_ids = self.tokenizer.encode(sentence,
                                           add_special_tokens=True,
                                           max_length=max_length)        

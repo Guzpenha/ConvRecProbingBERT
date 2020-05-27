@@ -38,7 +38,7 @@ class NextSentencePredictionProbe():
             from_pretrained(bert_model)
         self.tokenizer = BertTokenizer.\
             from_pretrained(bert_model)
-        
+
         if probe_type == "recommendation":
             self.sentences_generator = self.get_sentences_rec
         elif probe_type == "search":
@@ -254,7 +254,7 @@ class NextSentencePredictionProbe():
             {'params': [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)],
              'weight_decay': 0.0}
         ]
-        optimizer = AdamW(optimizer_grouped_parameters, lr=5e-5, eps=1e-8)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=5e-6, eps=1e-8)
         scheduler = get_linear_schedule_with_warmup(
             optimizer, num_warmup_steps=self.warmup_steps, num_training_steps=num_epochs*len(self.data_loader)
         )

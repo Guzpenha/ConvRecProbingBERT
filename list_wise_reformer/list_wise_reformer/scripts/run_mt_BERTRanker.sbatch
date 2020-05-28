@@ -34,6 +34,6 @@ do
       --early_stopping_steps 200000 \
       --logging_steps 1000 \
       --learning_rate 5e-6 \
-      --multi_task_for MULTI_TASK_DATA
+      --multi_task_for $MULTI_TASK_DATA
   done
 done

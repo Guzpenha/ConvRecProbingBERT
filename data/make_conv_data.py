@@ -46,7 +46,7 @@ def generate_conv_data(in_path, subreddit):
         ] + list(candidates))
         index_subreddit.append([idx, r['subreddit']])
 
-    random.shuffle(instances)
+    # random.shuffle(instances) #<-- this shouldnt be here. instances from same dialogue will be spread over different data splits
     train, valid, test = (instances[0: int(0.8*len(instances))],
                         instances[int(0.8*len(instances)) : int(0.9*len(instances))],
                         instances[int(0.9*len(instances)):])

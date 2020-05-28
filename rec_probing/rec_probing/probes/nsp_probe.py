@@ -6,6 +6,7 @@ from IPython import embed
 from tqdm import tqdm
 from numpy.random import choice
 import numpy as np
+import pandas as pd
 from scipy.special import softmax as softmax_scipy
 
 import torch
@@ -22,6 +23,7 @@ class NextSentencePredictionProbe():
         random.seed(self.seed)        
         torch.manual_seed(self.seed)
 
+        self.probe_type = probe_type
         self.warmup_steps = 0
         self.items_popularity = items_popularity
         self.number_candidates = number_candidates
@@ -124,7 +126,7 @@ class NextSentencePredictionProbe():
         raw_queries = []
         for i in range(self.number_queries_per_user):
             drawn_items = choice(user_session, n_items_from_history+1,
-              p=items_pop)
+              p=items_pop, replace=False)
             raw_query = [(drawn_items)]
             sentence_pos = (", ".join(drawn_items[0:-1]),
                             (drawn_items[-1]))
@@ -285,3 +287,14 @@ class NextSentencePredictionProbe():
         if isinstance(self.model, torch.nn.DataParallel):
             self.model = self.model.module
         return self.model
+
+    def get_probes_in_dialogue_format(self):
+        columns = ["query", "relevant_doc"] +  ["non_relevant_{}".format(i) for i in range(1, self.number_candidates-1)]
+        probes_conv_format = []
+        for prompt in self.all_raw_queries:
+            if "recommendation" in self.probe_type:
+                probes_conv_format.append([prompt[0][0], prompt[0][1]] + prompt[1:self.number_candidates-1])
+            else:
+                probes_conv_format.append([prompt[0], prompt[1]] + prompt[2:self.number_candidates])
+        df_probes_conv_format = pd.DataFrame(probes_conv_format, columns=columns)
+        return df_probes_conv_format

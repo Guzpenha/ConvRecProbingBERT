@@ -47,9 +47,15 @@ class BERTRanker():
         examples = self.processor.\
             get_examples_from_sessions(sessions,
                                        2)
-        if os.path.exists(self.args.data_folder+self.args.task+"/train_examples_bert.pk"):
+    
+        if self.args.multi_task_for != "":
+            train_file_path = self.args.data_folder+self.args.task+"/train_examples_bert_{}.pk".format(self.args.multi_task_for)
+        else:
+            train_file_path = self.args.data_folder+self.args.task+"/train_examples_bert.pk"
+
+        if os.path.exists(train_file_path):
             logging.info("Loading instances from file.")
-            f = open(self.args.data_folder+self.args.task+"/train_examples_bert.pk", "rb")
+            f = open(train_file_path, "rb")
             features = pickle.load(f)
             f.close()
         else:
@@ -62,7 +68,7 @@ class BERTRanker():
                                                 pad_on_left=False,
                                                 pad_token=self.tokenizer.convert_tokens_to_ids([self.tokenizer.pad_token])[0],
                                                 pad_token_segment_id=0)
-            f = open(self.args.data_folder+self.args.task+"/train_examples_bert.pk", "wb")
+            f = open(train_file_path, "wb")
             pickle.dump(features, f)
             f.close()
                 

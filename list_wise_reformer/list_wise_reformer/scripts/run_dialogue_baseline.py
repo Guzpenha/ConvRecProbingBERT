@@ -29,7 +29,11 @@ def run_experiment(args):
         args.ranker = "bert"
 
     args.run_id = str(ex.current_run._id)
-    train = pd.read_csv(args.data_folder+args.task+"/train.csv", 
+    if args.multi_task_for == "":
+        train_file="/train.csv"
+    else:
+        train_file = "/train_mt_{}.csv".format(args.multi_task_for)
+    train = pd.read_csv(args.data_folder+args.task+train_file, 
         lineterminator= "\n").fillna(' ')
     if args.nrows != -1:
         valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", 
@@ -106,6 +110,8 @@ def main():
                         help="ranker to use : "+",".join(model_classes.keys()))
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="the folder to output predictions")
+    parser.add_argument("--multi_task_for", default="", type=str, required=False, 
+                        help="whether to use file with multiple train_instances or not. Empty str if using train, otherwise train_<multi_task_for>.csv")
     args = parser.parse_args()
 
     logging.basicConfig(

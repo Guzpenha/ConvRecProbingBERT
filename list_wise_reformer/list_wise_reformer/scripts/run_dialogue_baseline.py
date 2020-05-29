@@ -98,7 +98,7 @@ def main():
                         help="default is bert-base-cased.")
     parser.add_argument("--nrows", default=-1, type=int, required=False,
                         help="-1 if all rows, otherwise the number of training and test instances to use.")
-    parser.add_argument("--num_epochs", default=1, type=int, required=False,
+    parser.add_argument("--num_epochs", default=5, type=int, required=False,
                         help="Number of epochs for models that do optimization.")                
     parser.add_argument("--learning_rate", default=5e-5, type=float, required=False,
                         help="Learning rate")

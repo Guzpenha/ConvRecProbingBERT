@@ -48,7 +48,6 @@ def run_experiment(args):
     else:
         model = model_classes[args.ranker](args, ex)
 
-    results = {}
     model_name = model.__class__.__name__
     logging.info("Fitting {} for {}".format(model_name, args.task))
     if args.ranker == 'bert':
@@ -57,7 +56,40 @@ def run_experiment(args):
         model.fit(train)
 
     del(train)
+
+    if args.task == "redial":
+        logging.info("Predicting for adversarial")
+        results = {}
+        valid = pd.read_csv(args.data_folder+args.task+"/valid_adv.csv", 
+            lineterminator= "\n").fillna(' ')
+        preds = model.predict(valid, valid.columns[1:], training_eval=False, adv_eval=True)
+
+        results[model_name] = {}
+        results[model_name]['preds'] = preds
+        # only first doc is relevant -> [1, 0, 0, ..., 0]
+        labels = [[1] + ([0] *  (len(valid.columns[1:])))
+                            for _ in range(valid.shape[0])]
+        results[model_name]['labels'] = labels
+
+        #Saving predictions to a file
+        preds_df = pd.DataFrame(preds, columns=["prediction_"+str(i) for i in range(len(preds[0]))])
+        preds_df.to_csv(args.output_dir+"/"+args.run_id+"/predictions_adv.csv", index=False)
+
+        results = evaluate_models(results)
+
+        model_name = model.__class__.__name__
+        logging.info("Evaluating {} for adv ".format(model_name))
+        for metric in ['recip_rank', 'ndcg_cut_10']:
+            res = 0
+            for q in results[model_name]['eval'].keys():
+                res += results[model_name]['eval'][q][metric]
+            res /= len(results[model_name]['eval'].keys())
+            logging.info("%s: %.4f" % (metric, res))
+
     logging.info("Predicting")
+    results = {}
+    valid = pd.read_csv(args.data_folder+args.task+"/valid.csv", 
+            lineterminator= "\n").fillna(' ')
     preds = model.predict(valid, valid.columns[1:])
 
     results[model_name] = {}

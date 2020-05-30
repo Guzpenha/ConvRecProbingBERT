@@ -165,12 +165,14 @@ class BERTRanker():
                     logging.info("Early stop.")
                     break
 
-    def predict(self, sessions, prediction_cols, training_eval=False):        
+    def predict(self, sessions, prediction_cols, training_eval=False, adv_eval=False):
         examples = self.processor.\
             get_examples_from_sessions(sessions,
                                        len(prediction_cols))
         if training_eval:
             path = self.args.data_folder+self.args.task+"/val_for_train_examples_bert.pk"
+        elif adv_eval:
+            path = self.args.data_folder+self.args.task+"/adv_test_examples_bert.pk"
         else:
             path = self.args.data_folder+self.args.task+"/test_examples_bert.pk"
 

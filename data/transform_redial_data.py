@@ -3,28 +3,32 @@ import json
 from IPython import embed
 import pandas as pd
 import random
+from tqdm import tqdm
 
-with zipfile.ZipFile('./website/redial_dataset.zip', 'r') as z:
+random.seed(42)
+with zipfile.ZipFile('./data/website/redial_dataset.zip', 'r') as z:
     z.extractall()
 
 train_data = []
-for line in open("./train_data.jsonl", "r"):
+for line in open("./data/train_data.jsonl", "r"):
     train_data.append(json.loads(line))
 print("Loaded {} train conversations".format(len(train_data)))
 
 test_data = []
-for line in open("./test_data.jsonl", "r"):
+for line in open("./data/test_data.jsonl", "r"):
     test_data.append(json.loads(line))
 print("Loaded {} test conversations".format(len(test_data)))
 
 
 all_condensed_messages = []
 all_mentioned_movies = set()
+print("Condensing dialogues' utterances.")
 for fold in [train_data, test_data]:
-    for dialogue in fold:
+    for dialogue in tqdm(fold):
         messages = dialogue['messages']
-        for movie in dialogue['movieMentions'].values():
-            all_mentioned_movies.add(movie)
+        if type(dialogue['movieMentions']) == dict:
+            for movie in dialogue['movieMentions'].values():
+                all_mentioned_movies.add(movie)
 
         condensed_messages = []
         curr_utterance = ""
@@ -37,8 +41,10 @@ for fold in [train_data, test_data]:
                 else:
                     curr_utterance+="{}".format(utterance_text)
             else:
-                for movie_id, title in dialogue['movieMentions'].items():
-                    curr_utterance = curr_utterance.replace("@{}".format(movie_id), title)
+                if type(dialogue['movieMentions']) == dict:
+                    for movie_id, title in dialogue['movieMentions'].items():
+                        if title is not None:                    
+                            curr_utterance = curr_utterance.replace("@{}".format(movie_id), title)
                 condensed_messages.append(curr_utterance)
                 curr_utterance = "{}".format(utterance_text)
                 current_worker_id = utterance['senderWorkerId']
@@ -46,13 +52,15 @@ for fold in [train_data, test_data]:
 
 random.shuffle(all_condensed_messages)
 all_conv = []
-for condensed_messages in all_condensed_messages:
-        context = ""
-        for i in range(0, len(condensed_messages) - (len(condensed_messages)%2), 2):
-            query = context + condensed_messages[i]
-            relevant = condensed_messages[i+1]
-            all_conv.append([query, relevant])
-            context+=query + " [UTTERANCE_SEP] " + relevant + " [UTTERANCE_SEP] "
+print("Creating training instances")
+for condensed_messages in tqdm(all_condensed_messages):
+    context = ""    
+    for i in range(0, len(condensed_messages) - (len(condensed_messages)%2), 2):
+        query = context + condensed_messages[i]
+        relevant = condensed_messages[i+1]
+        all_conv.append([query, relevant])
+        context+=condensed_messages[i] + " [UTTERANCE_SEP] " + relevant + " [UTTERANCE_SEP] "    
+
 all_conv = pd.DataFrame(all_conv, columns = ["query", "relevant_response"])
 all_conv["subreddit"] = "all"
-all_conv.to_csv("./dialogue/redial_dialogues.csv")
+all_conv.to_csv("./data/dialogue/redial_dialogues.csv")

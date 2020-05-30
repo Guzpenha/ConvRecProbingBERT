@@ -64,4 +64,6 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 unzip dialogues.csv.zip
 rm dialogues.csv.zip
 
-
+git clone https://github.com/ReDialData/website.git
+cd website
+git checkout data

@@ -28,10 +28,8 @@ def filter_categories_df(df, bert_model,
     for k, v in replace_rules.items():
         df["genres"] = df.progress_apply(lambda r,key=k,value=v: r["genres"].replace(key, value), axis=1)    
 
-    if 'roberta' in bert_model:
-        tokenizer = RobertaTokenizer.from_pretrained(bert_model)
-    else:
-        tokenizer = BertTokenizer.from_pretrained(bert_model)
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+
     df["split_genres"] = df.apply(lambda r: r["genres"].lower().split("|"), axis=1)
     count = df.shape[0]
     filtered_df = df

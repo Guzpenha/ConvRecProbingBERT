@@ -120,6 +120,11 @@ class NextSentencePredictionProbe():
         candidate_docs = row[2:(2+self.number_candidates)]
         
         # items_popularity = [1/len(user_session)] * len(user_session)  #equal probability
+        count_in_pop = [1 if item in self.items_popularity else 0 for item in user_session]
+        if sum(count_in_pop) < 2 :
+            logging.info("filtered user with no item in popularity dictionary")
+            return None, None
+
         items_pop = [self.items_popularity[item]  if item in self.items_popularity else 0 for item in user_session]
         items_pop = softmax_scipy(np.log(items_pop))
         sentences = []
@@ -166,32 +171,33 @@ class NextSentencePredictionProbe():
         for idx, row in enumerate(tqdm(self.data.itertuples(index=False), 
                                   desc="Generating probe dataset.")):
             sentences, raw_queries = self.sentences_generator(row)
-            self.all_raw_queries += raw_queries
-            for pos, negatives in sentences:
-                sentence_a, sentence_b = pos
-                input_ids, attention_masks, token_type_ids = \
-                    self._encode_sentence_pair(sentence_a, sentence_b)
-                all_input_ids.append(input_ids)
-                all_attention_masks.append(attention_masks)
-                all_token_type_ids.append(token_type_ids)
-                all_labels.append(1)                
-                for neg in negatives:
-                    sentence_a, sentence_b = neg
+            if sentences is not None:
+                self.all_raw_queries += raw_queries
+                for pos, negatives in sentences:
+                    sentence_a, sentence_b = pos
                     input_ids, attention_masks, token_type_ids = \
                         self._encode_sentence_pair(sentence_a, sentence_b)
                     all_input_ids.append(input_ids)
                     all_attention_masks.append(attention_masks)
                     all_token_type_ids.append(token_type_ids)
-                    all_labels.append(0)        
+                    all_labels.append(1)                
+                    for neg in negatives:
+                        sentence_a, sentence_b = neg
+                        input_ids, attention_masks, token_type_ids = \
+                            self._encode_sentence_pair(sentence_a, sentence_b)
+                        all_input_ids.append(input_ids)
+                        all_attention_masks.append(attention_masks)
+                        all_token_type_ids.append(token_type_ids)
+                        all_labels.append(0)        
 
-            if idx < 5:
-                logging.info("Probing negative example %d" % idx)
-                logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-                logging.info("attention_mask: %s" % " ".join([str(x) for x in attention_masks]))
-                logging.info("token_type_ids: %s" % " ".join([str(x) for x in token_type_ids]))
-                logging.info("label: 0")
-                logging.info("raw: %s --> %s" % (str(neg[0]), str(neg[1])))
-                logging.info("reconstructed: %s" % str(self.tokenizer.decode(input_ids)))
+                if idx < 5:
+                    logging.info("Probing negative example %d" % idx)
+                    logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
+                    logging.info("attention_mask: %s" % " ".join([str(x) for x in attention_masks]))
+                    logging.info("token_type_ids: %s" % " ".join([str(x) for x in token_type_ids]))
+                    logging.info("label: 0")
+                    logging.info("raw: %s --> %s" % (str(neg[0]), str(neg[1])))
+                    logging.info("reconstructed: %s" % str(self.tokenizer.decode(input_ids)))
 
         self.dataset = TensorDataset(torch.tensor(all_input_ids, dtype = torch.long), 
                                      torch.tensor(all_attention_masks, dtype = torch.long),

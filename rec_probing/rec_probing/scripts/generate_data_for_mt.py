@@ -33,17 +33,26 @@ def main():
 
     args = parser.parse_args()
 
+    is_redial = args.task == 'redial'
+    
     data_path = args.output_folder.split("/output_data")[0]
-    df_pop = pd.read_csv("{}/recommendation/{}/popularity.csv".format(data_path, args.task))
+    if is_redial:
+        # df_pop = pd.read_csv("{}/recommendation/{}/popularity.csv".format(data_path, "ml25m"))
+        df_pop =  pd.read_csv("{}/recommendation/{}/movies_with_mentions.csv".format(data_path, "ml25m"))[['movieName', 'nbMentions']]
+    else:
+        df_pop = pd.read_csv("{}/recommendation/{}/popularity.csv".format(data_path, args.task))
     df_pop.columns = ["title", "pop"]
     pop = df_pop.set_index("title").to_dict()["pop"]
 
-    dialogue_task={'ml25m':'movies', 'gr': 'books', 'music': 'music'}
+    dialogue_task={'ml25m':'movies', 'redial': 'redial', 'gr': 'books', 'music': 'music'}
     df_dialogues = pd.read_csv("{}/dialogue/{}/train.csv".format(data_path, dialogue_task[args.task]), 
             lineterminator= "\n")
     df_dialogues = df_dialogues[~df_dialogues.isnull().any(axis=1)] 
 
-    path = "{}/{}/train.csv".format(args.input_folder, args.task)
+    if is_redial:
+        path = "{}/{}/train.csv".format(args.input_folder, "ml25m")
+    else:
+        path = "{}/{}/train.csv".format(args.input_folder, args.task)
     df = pd.read_csv(path, lineterminator="\n", nrows=df_dialogues.shape[0])    
     # df = pd.read_csv(path, lineterminator="\n", nrows=args.number_queries) 
 

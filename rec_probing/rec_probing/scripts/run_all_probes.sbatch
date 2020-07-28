@@ -1,8 +1,8 @@
 #!/bin/sh
 
 #SBATCH --partition=general
-#SBATCH --qos=short
-#SBATCH --time=02:00:00
+#SBATCH --qos=long
+#SBATCH --time=05:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
@@ -15,8 +15,7 @@ source /home/nfs/gustavopenha/env_slice_learning/bin/activate
 
 REPO_DIR=/tudelft.net/staff-umbrella/conversationalsearch/recsys2020penha
 for TASK in 'ml25m' 'gr' 'music'
-do
-    for NUM_CANDIDATES in 1 5    
+do    
     do
         srun python run_probes.py \
             --task $TASK \
@@ -24,7 +23,7 @@ do
             --input_folder $REPO_DIR/data/recommendation/ \
             --output_folder $REPO_DIR/data/output_data/probes/ \
             --number_queries 100 \
-            --number_candidates $NUM_CANDIDATES \
+            --number_candidates 5 \
             --batch_size 8
 
     done

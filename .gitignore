@@ -1,7 +1,6 @@
 env
 data/dialogue
 list_wise_reformer/list_wise_reformer.egg-info/*
-data/recommendation/
 .vscode/launch.json
 rec_probing/*.egg-info
 *.pyc

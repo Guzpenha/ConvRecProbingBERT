@@ -1,0 +1,21 @@
+from transformers import pipeline
+nlp = pipeline("fill-mask", model="bert-large-cased")
+nlp(f"Vincent van Gogh died in {nlp.tokenizer.mask_token}.")
+[{'sequence': '[CLS] Vincent van Gogh died in Amsterdam. [SEP]', 'score': 0.4767616093158722, 'token': 7101},
+ {'sequence': '[CLS] Vincent van Gogh died in Paris. [SEP]', 'score': 0.10117574036121368, 'token': 2123},
+
+
+nlp = pipeline("fill-mask", model="roberta-large")
+nlp(f"Vincent van Gogh died in {nlp.tokenizer.mask_token}.")
+[{'sequence': '<s> Vincent van Gogh died in the city of Amsterdam.</s>', 'score': 0.6364755034446716, 'token': 16342}, 
+{'sequence': '<s> Vincent van Gogh died in the city of Paris.</s>', 'score': 0.02675420418381691, 'token': 2201}]
+
+
+nlp = pipeline("fill-mask", model="bert-large-cased")
+nlp(f"Rembrandt died in the city of {nlp.tokenizer.mask_token}.")
+[{'sequence': '[CLS] Rembrandt died in the city of Amsterdam. [SEP]', 'score': 0.5753881335258484, 'token': 7101},
+ {'sequence': '[CLS] Rembrandt died in the city of Leiden.
+
+nlp = pipeline("fill-mask", model="roberta-large")
+nlp(f"Rembrandt died in the city of {nlp.tokenizer.mask_token}.")
+[{'sequence': '<s> Rembrandt died in the city of Amsterdam.</s>', 'score': 0.7338836789131165, 'token': 16342}, {'sequence': '<s> Rembrandt died in the city of Brussels.</s>'

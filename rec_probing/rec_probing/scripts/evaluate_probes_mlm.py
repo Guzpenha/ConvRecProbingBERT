@@ -44,8 +44,9 @@ def main():
 
     tasks = ['ml25m', 'gr', 'music']    
     # sentence_types = ['no-item', 'type-I', 'type-II']
-    sentence_types = ['type-I', 'type-II']
-    models = ['bert-base-cased', 'bert-large-cased']
+    sentence_types = ['type-II']
+    # models = ['bert-base-cased', 'bert-large-cased']
+    models = ['bert-base-cased']
     dfs = []
     logging.info("Reading files")
     for task in tasks:
@@ -69,9 +70,12 @@ def main():
                     df["preds_scores"] = df["preds_scores"].apply(ast.literal_eval)
                     dfs.append(df)
     dfs_raw = pd.concat(dfs)
+    embed()
+
     logging.info("Calculating R@5 and R@1")
     dfs_raw["preds"] = dfs_raw.apply(lambda r: r["preds"].lower(), axis=1)
     dfs_raw["labels"] = dfs_raw.apply(lambda r: r["labels"].lower(), axis=1)
+    dfs_raw["len_labels"] = dfs_raw.apply(lambda r: len(r["labels"].split(" ")), axis=1)
     dfs_raw["intersection_5"] = dfs_raw.apply(lambda r: set(r["preds"].split(" ")[0:5]).intersection(set(r["labels"].split(" "))),axis=1)
     dfs_raw["R@5"] = dfs_raw.apply(lambda r: len(r["intersection_5"])/len(r["labels"].split(" ")),axis=1)
     dfs_raw["intersection_1"] = dfs_raw.apply(lambda r: set(r["preds"].split(" ")[0:1]).intersection(set(r["labels"].split(" "))),axis=1)

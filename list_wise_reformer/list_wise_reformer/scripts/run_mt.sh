@@ -15,7 +15,7 @@ do
       --seed $SEED \
       --ranker bert \
       --output_dir $REPO_DIR/data/output_data/mt_bert4dialogue \
-      --early_stopping_steps 2000 \
+      --early_stopping_steps 4000 \
       --logging_steps 200001 \
       --num_epochs 1 \
       --learning_rate 5e-6 \

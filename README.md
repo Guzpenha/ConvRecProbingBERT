@@ -27,9 +27,9 @@ This will download and preprocess a few datasets:
   
 || Recommendation | Search | Conversational Recommendation |
 |-------------|-------------|------------|------------|
-|Movies | ML25M: 25m movie ratings | Reviews crawled from IMDB | Conversations crawled from /r/moviesuggestions/
-| Books | GoodReads: 200m book interactions | Reviews from GoodReads | Conversations crawled from /r/booksuggestions/ |
-| Music | Amazon-Music: 2.3m ratings/reviews | Reviews from Amazon-Music | Conversations crawled from /r/musicuggestions/ | 
+|Movies | [ML25M](https://grouplens.org/datasets/movielens/25m/): 25m movie ratings | Reviews crawled from IMDB | Conversations crawled from [/r/moviesuggestions/](https://www.reddit.com/r/MovieSuggestions/)
+| Books | [GoodReads](https://github.com/MengtingWan/goodreads): 200m book interactions | Reviews from GoodReads | Conversations crawled from [/r/booksuggestions/](https://www.reddit.com/r/MovieSuggestions/) |
+| Music | [Amazon-Music](https://nijianmo.github.io/amazon/index.html): 2.3m ratings/reviews | Reviews from Amazon-Music | Conversations crawled from [/r/musicuggestions/](https://www.reddit.com/r/musicsuggestions/) | 
 
 As well as categories information for items of the 3 domains.
 

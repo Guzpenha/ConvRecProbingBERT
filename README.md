@@ -79,22 +79,9 @@ cd list_wise_reformer/scripts
 Ignore that the package is named list_wise_reformer. It contains several baselines for dialogue, search and recommendation, including a prototype of a list wise Reformer model.
 
 ## Infusing knowledge
-We simply train the models for the probing tasks before fine-tunning for the final task, and use this model as input to the previous code.
-
-```
-python pre_train_BERT.py \
-    --task $TASK \
-    --probe_type ${PROBE_TYPE} \
-    --input_folder $REPO_DIR/data/recommendation/ \
-    --output_folder $REPO_DIR/data/output_data/probes/ \
-    --number_queries $NUMBER_PROBE_QUERIES \
-    --number_candidates 1 \
-    --batch_size 32 \
-    --num_epochs 5 \
-    --bert_model "bert-base-cased"
-```
+We interleave the probing tasks with the response ranking task by creating a dataset with half instances from each task. We create the dataset using the script rec_probing/rec_probing/scripts/generate_data_for_mt.py. We then use the previous script to train the model on this data.
 
 ## Experiments with ReDial Data
 
-They use the same framework from other tasks, the difference is that we need to create the adversarial test data. For that we use the script data/genereate_adversarial_test.py.
+We use the same framework from the other tasks, the difference is that we need to create the adversarial test data. For that we use the script data/genereate_adversarial_test.py.
 

@@ -85,3 +85,23 @@ We interleave the probing tasks with the response ranking task by creating a dat
 
 We use the same framework from the other tasks, the difference is that we need to create the adversarial test data. For that we use the script data/genereate_adversarial_test.py.
 
+
+Reference
+```
+@inproceedings{10.1145/3383313.3412249,
+  author = {Penha, Gustavo and Hauff, Claudia},
+  title = {What Does BERT Know about Books, Movies and Music? Probing BERT for Conversational Recommendation},
+  year = {2020},
+  isbn = {9781450375832},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  url = {https://doi.org/10.1145/3383313.3412249},
+  doi = {10.1145/3383313.3412249},
+  booktitle = {Fourteenth ACM Conference on Recommender Systems},
+  pages = {388–397},
+  numpages = {10},
+  keywords = {conversational search, probing, conversational recommendation},
+  location = {Virtual Event, Brazil},
+  series = {RecSys '20}
+}
+```
